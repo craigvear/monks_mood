@@ -2,10 +2,11 @@
 makes a sound using a dedictaed instrument audio dir,
 and controls a robot movement using serial"""
 
-import trio
-import pickle
-import sys
-
+from time import sleep
+from pydub import AudioSegment
+from pydub.playback import _play_with_simpleaudio as play
+from glob import glob
+from random import randrange
 
 class Robot:
     def __init__(self, instrument, port, addr):
@@ -14,28 +15,40 @@ class Robot:
         self.PORT = port
         self.IP_ADDR = addr
         self.running = False
+        self.audio_dir = glob(f'assets/{instrument}/*.wav')
+        self.audio_dir_len = len(self.audio_dir)
 
-    async def make_sound(self, incoming_raw_data):
-        pass
+        # deal with pan laws
+        if instrument == 'sax':
+            self.pan_law = -0.5
+        elif instrument == 'tromb':
+            self.pan_law = 0.5
+        else:
+            self.pan_law = 0
 
-    async def move_bot(self, move_data):
-        pass
+    def make_sound(self, incoming_raw_data):
+        while True:
+            # temp random num gen
+            rnd = randrange(self.audio_dir_len)
+            print(self.audio_dir[rnd])
 
-    # async def flywheel(self):
-    #     print(f'parent {self.instrument}: started!')
-    #     while self.running:
-    #         print(f'parent: connecting to {self.IP_ADDR}:{self.PORT}')
-    #         client_stream = await trio.open_tcp_stream(self.IP_ADDR, self.PORT)
-    #         async with client_stream:
-    #             # self.interrupt_bang = True
-    #             async with trio.open_nursery() as nursery:
-    #                 # spawning socket listener
-    #
-    #
-    #
-    #                 print("parent: spawning making data ...")
-    #                 nursery.start_soon(self.make_sound)
-    #
-    #                 # spawning affect listener and master clocks
-    #                 print("parent: spawning affect listener and clocks ...")
-    #                 nursery.start_soon(self.move_bot)
+            # make a sound from incoming data
+            snippet = AudioSegment.from_wav(self.audio_dir[rnd])
+
+            # pan snippet
+            pan_snippet = snippet.pan(self.pan_law)
+
+            # get the robot to move with
+            play(pan_snippet)
+
+            # prepare wait time and then move bot
+            wait_time = snippet.duration_seconds / 10
+            self.move_bot(incoming_raw_data, wait_time)
+
+    def move_bot(self, move_data, wait_time):
+        print ('made it to bot move')
+        sleep(wait_time)
+
+if __name__ == '__main__':
+    bot = Robot('sax', 0, 0)
+    bot.make_sound(2)

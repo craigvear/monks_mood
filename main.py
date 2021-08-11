@@ -40,10 +40,10 @@ def go():
 def play_intro():
     # play the intro head and wait to finish
 
-    # get alfie's part
+    # get sax's part
     alfie = AudioSegment.from_wav('assets/alfie_intro.wav')
 
-    # pan alfie
+    # pan sax
     alfieLeft = alfie.pan(-0.5)
 
     # get bass part
