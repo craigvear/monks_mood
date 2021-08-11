@@ -28,12 +28,15 @@ class Robot:
 
     def make_sound(self, incoming_raw_data):
         while True:
-            # temp random num gen
-            rnd = randrange(self.audio_dir_len)
-            print(self.audio_dir[rnd])
+            # # temp random num gen
+            # rnd = randrange(self.audio_dir_len)
+            # print(self.audio_dir[rnd])
+
+            # rescale incoming raw data
+            audio_dir_position = int(((incoming_raw_data - 0) / (1 - 0)) * (self.audio_dir_len - 0) + 0)
 
             # make a sound from incoming data
-            snippet = AudioSegment.from_wav(self.audio_dir[rnd])
+            snippet = AudioSegment.from_wav(self.audio_dir[audio_dir_position])
 
             # pan snippet
             pan_snippet = snippet.pan(self.pan_law)
@@ -50,5 +53,5 @@ class Robot:
         sleep(wait_time)
 
 if __name__ == '__main__':
-    bot = Robot('sax', 0, 0)
-    bot.make_sound(2)
+    bot = Robot('bass', 0, 0)
+    bot.make_sound(0.2)
