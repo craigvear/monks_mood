@@ -11,7 +11,7 @@ class Client:
         host_name = socket.gethostname()
         self.HOST = socket.gethostbyname(host_name)
         self.PORT = 8000
-        print(f'name {host_name}, ip addr is {self.HOST}, posrt = {self.PORT}')
+        print(f'name {host_name}, ip addr is {self.HOST}, port = {self.PORT}')
         # instantiate a class object to control the jetbot
         self.bot = Robot()
         self.running = True

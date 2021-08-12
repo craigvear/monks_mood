@@ -1,12 +1,14 @@
 """recieves data from main,
 makes a sound using a dedictaed instrument audio dir,
-and controls a robot movement using serial"""
+and controls a robot movement using serial.
+
+NOTE - this will need to be initiated as an independent thread or Trio nursery"""
 
 from time import sleep
 from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio as play
 from glob import glob
-from random import randrange
+import trio
 
 class Robot:
     def __init__(self, instrument, port, addr):
@@ -27,6 +29,11 @@ class Robot:
             self.pan_law = 0.5
         else:
             self.pan_law = 0
+
+    async def nursery(self):
+
+
+
 
     def make_sound(self, incoming_raw_data):
         while True:
