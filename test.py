@@ -1,29 +1,59 @@
+# CLIENT SIDE
+
+
 import socket
-from random import random
-from time import sleep
 
-HOST = "192.168.1.123"
-PORT = 8888
 
-while True:
-    print(f"client: connecting to {HOST}:{PORT}")
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
-        s.listen()
-        client_stream, addr = s.accept()
-        with client_stream:
-            print('Connected by', addr)
-            connected = True
-            while connected:
+def Main():
+    host = '192.168.1.79'  # client ip
+    port = 4005
 
-                # send out-going data to server
-                while True:
-                    rnd = random()
-                    raw = rnd * 100
-                    data = int.to_bytes(raw, 'big')
+    server = ('192.168.1.123', 4000)
 
-                    client_stream.sendall(data)
-                    sleep(1)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((host, port))
+
+    message = input("-> ")
+    while message != 'q':
+        s.sendto(message.encode('utf-8'), server)
+        data, addr = s.recvfrom(1024)
+        data = data.decode('utf-8')
+        print("Received from server: " + data)
+        message = input("-> ")
+    s.close()
+
+
+if __name__ == '__main__':
+    Main()
+
+
+
+# import socket
+# from random import random
+# from time import sleep
+#
+# HOST = "192.168.1.123"
+# PORT = 8888
+#
+# while True:
+#     print(f"client: connecting to {HOST}:{PORT}")
+#     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+#         s.bind((HOST, PORT))
+#         s.listen()
+#         client_stream, addr = s.accept()
+#         with client_stream:
+#             print('Connected by', addr)
+#             connected = True
+#             while connected:
+#
+#                 # send out-going data to server
+#                 while True:
+#                     rnd = random()
+#                     raw = rnd * 100
+#                     data = int.to_bytes(raw, 'big')
+#
+#                     client_stream.sendall(data)
+#                     sleep(1)
 
 
 
