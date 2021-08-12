@@ -1,7 +1,7 @@
 """this script sits in a robot, opens a socket
  and recieves raw date that it translates into movement """
 
-from robot.rerobot import Robot
+from jetbot.robot import Robot
 import socket
 import sys
 
