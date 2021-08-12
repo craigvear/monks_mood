@@ -63,7 +63,7 @@ class Server:
             print(f"client: connecting to {self.HOST}:{self.PORT}")
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as self.s:
                 self.s.bind((self.HOST, self.PORT))
-                self.s.listen()
+                # self.s.listen()
                 server_stream, addr = self.s.accept()
                 with server_stream:
                     print('Connected by', addr)
