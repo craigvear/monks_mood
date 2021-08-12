@@ -17,9 +17,13 @@ class Client:
     def __init__(self):
         self.running = True
         self.connected = False
-        self.HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-        self.PORT = 65432
+
+        # get own ip address
+        ip = socket.gethostbyname(socket.gethostname())
+        self.HOST = ip  # Client IP (this)
+        self.PORT = 5000
         # Port to listen on (non-privileged ports are > 1023)
+
         self.CHUNK = 2 ** 11
         self.RATE = 44100
         self.p = pyaudio.PyAudio()
@@ -144,7 +148,7 @@ class Client:
     def main(self):
         # snd_listen and client need dependent threads.
         # All other IO is ok as a single Trio thread inside self.client
-        tasks = [self.snd_listen, self.client, self.parent_go]
+        tasks = [self.snd_listen, self.client]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = {executor.submit(task): task for task in tasks}

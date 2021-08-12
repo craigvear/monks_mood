@@ -8,7 +8,6 @@ from time import sleep
 from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio as play
 from glob import glob
-import trio
 
 class Robot:
     def __init__(self, instrument, port, addr):
@@ -29,11 +28,6 @@ class Robot:
             self.pan_law = 0.5
         else:
             self.pan_law = 0
-
-    async def nursery(self):
-
-
-
 
     def make_sound(self, incoming_raw_data):
         while True:
