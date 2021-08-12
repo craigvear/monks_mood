@@ -3,7 +3,7 @@ from random import random
 from time import sleep
 
 HOST = "192.168.1.123"
-PORT = 8000
+PORT = 54321
 
 while True:
     print(f"client: connecting to {HOST}:{PORT}")
