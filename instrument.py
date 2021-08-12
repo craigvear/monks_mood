@@ -18,6 +18,8 @@ class Robot:
         self.audio_dir = glob(f'assets/{instrument}/*.wav')
         self.audio_dir_len = len(self.audio_dir)
 
+        # todo start serial connection with actual robot
+
         # deal with pan laws
         if instrument == 'sax':
             self.pan_law = -0.5
@@ -50,6 +52,9 @@ class Robot:
 
     def move_bot(self, move_data, wait_time):
         print ('made it to bot move')
+
+        # todo send a command to make the bot move/ stop old move and start new
+
         sleep(wait_time)
 
 if __name__ == '__main__':
