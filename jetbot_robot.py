@@ -5,7 +5,7 @@ from jetbot.robot import Robot
 import socket
 import sys
 
-class Client:
+class Server:
     def __init__(self):
         # get IP address
         host_name = socket.gethostname()
@@ -37,7 +37,7 @@ class Client:
                         print(f"receiver: got data {data}")
 
                         # listen for stop value from AI
-                        if data == 999:
+                        if data == 99999:
                             self.terminate()
 
                         # send to parse and move bot
@@ -49,6 +49,8 @@ class Client:
 
     def parse_data(self, data):
         # rescale data to move
+        data /= 100
+
         # new_value = ( (old_value - old_min) / (old_max - old_min) ) * (new_max - new_min) + new_min
         # scaled_data = int(((data - 0) / (1 - 0)) * (10 - -10) + -10)
         scaled_data = ((data - 0) / (1 - 0)) * (10 - -10) + -10
@@ -60,7 +62,7 @@ class Client:
             self.bot.right(scaled_data)
 
 if __name__ == '__main__':
-    client = Client()
+    client = Server()
     client.start()
 
 
