@@ -40,7 +40,7 @@ import sys
 class Server:
     def __init__(self):
         # get IP address
-        host_name = self.get_ip_address('eth0')
+        host_name = self.get_ip_address('wlan0')
         self.HOST = socket.gethostbyname(host_name) # Server ip (own)
         self.PORT = 5000
         print(f'name {host_name}, ip addr is {self.HOST}, port = {self.PORT}')
