@@ -4,7 +4,7 @@ import socket
 
 
 def Main():
-    host = '192.168.0.12'  # Server ip
+    host = '192.168.1.123'  # Server ip
     port = 5000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
