@@ -5,7 +5,7 @@ import socket
 
 def Main():
     host = '192.168.0.12'  # Server ip
-    port = 4000
+    port = 5000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
