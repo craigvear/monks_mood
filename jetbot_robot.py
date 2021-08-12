@@ -64,24 +64,24 @@ class Server:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as self.s:
                 self.s.bind((self.HOST, self.PORT))
                 # self.s.listen()
-                server_stream, addr = self.s.accept()
-                with server_stream:
-                    print('Connected by', addr)
-                    self.connected = True
-                    while self.connected:
-                        # get data from stream
-                        raw_data, addr = server_stream.recvfrom(1024)
+                # server_stream, addr = self.s.accept()
+                # with server_stream:
+                #     print('Connected by', addr)
+                self.connected = True
+                while self.connected:
+                    # get data from stream
+                    raw_data, addr = self.s.recvfrom(1024)
 
-                        # convert to from string to float
-                        data = float(raw_data)
-                        print(f"receiver: got data {data} from {addr}")
+                    # convert to from string to float
+                    data = float(raw_data)
+                    print(f"receiver: got data {data} from {addr}")
 
-                        # listen for stop value from AI
-                        if data == 99999:
-                            self.terminate()
+                    # listen for stop value from AI
+                    if data == 99999:
+                        self.terminate()
 
-                        # send to parse and move bot
-                        self.parse_data(data)
+                    # send to parse and move bot
+                    self.parse_data(data)
 
     def terminate(self):
         self.s.close()
