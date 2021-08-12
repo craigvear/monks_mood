@@ -2,7 +2,7 @@ import socket
 from random import random
 from time import sleep
 
-HOST = "192.168.1.80"
+HOST = "192.168.1.123"
 PORT = 54321
 
 while True:

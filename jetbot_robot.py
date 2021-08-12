@@ -10,7 +10,7 @@ class Server:
         # get IP address
         host_name = socket.gethostname()
         # self.HOST = socket.gethostbyname(host_name)
-        self.HOST = '192.168.1.80'
+        self.HOST = '192.168.1.79'
         self.PORT = 54321
         print(f'name {host_name}, ip addr is {self.HOST}, port = {self.PORT}')
         # instantiate a class object to control the jetbot
