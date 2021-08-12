@@ -107,16 +107,16 @@ class Client:
         while self.connected:
             async with trio.open_nursery() as nursery:
                 # spawning bass soundbot
-                print("parent: spawning sax bot ...")
+                print("parent: spawning bass bot ...")
                 nursery.start_soon(self.improv(self.bass_bot))
-
-                # spawning tromb soundbot
-                print("parent: spawning sax bot ...")
-                nursery.start_soon(self.improv(self.tromb_bot))
 
                 # spawning sax soundbot
                 print("parent: spawning sax bot ...")
                 nursery.start_soon(self.improv(self.sax_bot))
+
+                # # spawning tromb soundbot
+                # print("parent: spawning tromb bot ...")
+                # nursery.start_soon(self.improv(self.tromb_bot))
 
 
     def improv(self, bot):
