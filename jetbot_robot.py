@@ -33,18 +33,28 @@
 
 from jetbot.robot import Robot
 import socket
+import fcntl
+import struct
 import sys
 
 class Server:
     def __init__(self):
         # get IP address
-        host_name = socket.gethostname()
+        host_name = self.get_ip_address('eth0')
         self.HOST = socket.gethostbyname(host_name) # Server ip (own)
         self.PORT = 5000
         print(f'name {host_name}, ip addr is {self.HOST}, port = {self.PORT}')
         # instantiate a class object to control the jetbot
         self.bot = Robot()
         self.running = True
+
+    def get_ip_address(self, ifname):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+        )[20:24])
 
     # open server and wait for commands
     def start(self):
