@@ -32,8 +32,7 @@ from time import sleep, time
 
 class Master:
     def __init__(self):
-        self.running = True
-        self.connected = False
+        self.running = False
 
         # get own ip address
         ip = socket.gethostbyname(socket.gethostname())
@@ -41,22 +40,22 @@ class Master:
         self.PORT = 5000
 
 
-        # instantiate all performer class's
-        sax_ip = input('please enter sax bot IP e.g. 192.168.1.123 (x if not available)')
-        if sax_ip != 'x':
-            self.sax_bot = Robot(instrument='sax', port=5000, addr=sax_ip)
-            self.sax_bot_flag = True
-            self.make_connection()
-
-        tromb_ip = input('please enter tromb bot IP e.g. 192.168.1.123 (x if not available)')
-        if tromb_ip != 'x':
-            self.tromb_bot = Robot(instrument='trombone', port=5000, addr=tromb_ip)
-            self.tromb_bot_flag = True
-
-        bass_ip = input('please enter bass bot IP e.g. 192.168.1.123 (x if not available)')
-        if bass_ip != 'x':
-            self.bass_bot = Robot(instrument='bass', port=5000, addr=bass_ip)
-            self.bass_bot_flag = True
+        # # instantiate all performer class's
+        # sax_ip = input('please enter sax bot IP e.g. 192.168.1.123 (x if not available)')
+        # if sax_ip != 'x':
+        #     self.sax_bot = Robot(instrument='sax', port=5000, addr=sax_ip)
+        #     self.sax_bot_flag = True
+        #     self.make_connection()
+        #
+        # tromb_ip = input('please enter tromb bot IP e.g. 192.168.1.123 (x if not available)')
+        # if tromb_ip != 'x':
+        #     self.tromb_bot = Robot(instrument='trombone', port=5000, addr=tromb_ip)
+        #     self.tromb_bot_flag = True
+        #
+        # bass_ip = input('please enter bass bot IP e.g. 192.168.1.123 (x if not available)')
+        # if bass_ip != 'x':
+        #     self.bass_bot = Robot(instrument='bass', port=5000, addr=bass_ip)
+        #     self.bass_bot_flag = True
 
         # # build send data dict
         # self.send_data_dict = {'mic_level': 0,
@@ -90,6 +89,7 @@ class Master:
     def engine_stream(self):
         # initiate engine client-server comms
         self.engine = Client()
+        self.engine.main()
 
     async def parent(self):
         print("parent: started!")
@@ -110,27 +110,25 @@ class Master:
                     print("parent: spawning tromb bot ...")
                     nursery.start_soon(self.improv(self.tromb_bot))
 
-
     def improv(self, bot):
+        # grab raw data from engine stream
+        raw_data_from_dict = self.engine.got_dict['master_output']
 
-        # todo grab data direct from engine client e.g. = self.client.got_dict['master etc
-
-        raw_data_from_dict = self.got_dict['master_output']
+        # hand it to which ever bot is calling for it
         bot.make_sound(raw_data_from_dict)
 
-    def parent_go(self):
-        # wait for intro to finish
-        while self.running:
-            if not self.improv:
-                sleep(0.1)
+    # def parent_go(self):
+    #     # wait for intro to finish
+    #     while self.running:
+    #         if not self.improv:
+    #             sleep(0.1)
+    #
+    #     # then start improvisers
+    #         else:
+    #             trio.run(self.parent)
 
-        # then start inprovisers
-            else:
-                trio.run(self.parent)
-
+    # play the intro head and wait to finish
     def play_intro(self):
-        # play the intro head and wait to finish
-
         # get sax's part
         alfie = AudioSegment.from_wav('assets/alfie_intro.wav')
 
@@ -147,34 +145,36 @@ class Master:
         play(mixed_intro)
 
     def main(self):
-        # All other IO is ok as a single Trio thread inside self.client
-        tasks = [self.conducter, self.engine_stream, self.parent_go]
+        # Thread the conductor, engine stream and each of the robot objects
+        tasks = [self.conducter, self.engine_stream]
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as self.executor:
-            futures = {self.executor.submit(task): task for task in tasks}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {executor.submit(task): task for task in tasks}
 
     # this func organises the overall composition of the performance
-    # starts with intro, then opens the conditions for improv,
-    # then closes them for outro
     def conducter(self):
-        # start the whole performance with the intro
-        # then into drum solo ready for threading to kick in
-        self.play_intro()
+        # wait for engine stream to work
+        while self.engine.connected:
+            self.running = True
+            # start the whole performance with the intro
+            self.play_intro()
 
-        now = time()
-        while time() < now + 180: # = 3 min improv
-            self.improv = True
-        self.improv = False
+            # then opens the conditions for improv,
+            now = time()
+            while time() < now + 180: # = 3 min improv
+                self.improv = True
 
-        # then play outro
-        #self.play_outro()
+            # then closes them for outro
+            self.improv = False
+            #self.play_outro()
 
         # terminate all threads etc
         self.engine.terminate()
         self.terminate()
 
     def terminate(self):
-        self.executor.shutdown()
+        #self.executor.shutdown()
+        pass
 
 if __name__ == '__main__':
     mstr = Master()
