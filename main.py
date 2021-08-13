@@ -23,14 +23,14 @@ from instrument import Robot
 import trio
 import concurrent.futures
 import socket
+from engine_client import Client
 import pickle
 import pyaudio
 import numpy as np
 from random import random
-from time import sleep
+from time import sleep, time
 
-
-class Client:
+class Master:
     def __init__(self):
         self.running = True
         self.connected = False
@@ -39,99 +39,92 @@ class Client:
         ip = socket.gethostbyname(socket.gethostname())
         self.HOST = ip  # Client IP (this)
         self.PORT = 5000
-        # Port to listen on (non-privileged ports are > 1023)
 
-        self.CHUNK = 2 ** 11
-        self.RATE = 44100
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=1,
-                                  rate=self.RATE,
-                                  input=True,
-                                  frames_per_buffer=self.CHUNK)
 
         # instantiate all performer class's
-        self.sax_bot = Robot(instrument='sax', port=5000, addr='192.168.1.123')
-        self.tromb_bot = Robot(instrument='trombone', port=5000, addr='192.168.1.124')
-        self.bass_bot = Robot(instrument='bass', port=5000, addr='192.168.1.125')
+        sax_ip = input('please enter sax bot IP e.g. 192.168.1.123 (x if not available)')
+        if sax_ip != 'x':
+            self.sax_bot = Robot(instrument='sax', port=5000, addr=sax_ip)
+            self.sax_bot_flag = True
+            self.make_connection()
 
-        # build send data dict
-        self.send_data_dict = {'mic_level': 0,
-                               'speed': 1,
-                               'tempo': 0.1
-                               }
+        tromb_ip = input('please enter tromb bot IP e.g. 192.168.1.123 (x if not available)')
+        if tromb_ip != 'x':
+            self.tromb_bot = Robot(instrument='trombone', port=5000, addr=tromb_ip)
+            self.tromb_bot_flag = True
 
-        # init got dict
-        self.got_dict = {}
+        bass_ip = input('please enter bass bot IP e.g. 192.168.1.123 (x if not available)')
+        if bass_ip != 'x':
+            self.bass_bot = Robot(instrument='bass', port=5000, addr=bass_ip)
+            self.bass_bot_flag = True
 
-    def client_stream(self):
-        print("client: started!")
-        while self.running:
-            print(f"client: connecting to {self.HOST}:{self.PORT}")
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind((self.HOST, self.PORT))
-                s.listen()
-                client_stream, addr = s.accept()
-                with client_stream:
-                    print('Connected by', addr)
-                    self.connected = True
-                    while self.connected:
-                        # get data from stream
-                        data = client_stream.recv(1024)
-                        self.got_dict = pickle.loads(data)
-                        print(f"receiver: got data {self.got_dict}")
+        # # build send data dict
+        # self.send_data_dict = {'mic_level': 0,
+        #                        'speed': 1,
+        #                        'tempo': 0.1
+        #                        }
+        #
+        # # init got dict
+        # self.got_dict = {}
 
-                        # send it to the mincer for soundBot control
-                        # NB play_with_simpleaudio does not hold thread
-                        # master_data = self.got_dict['master_output']
-                        # rhythm_rate = self.got_dict['rhythm_rate']
-                        # self.mincer(master_data, rhythm_rate)
+    def make_connection(self, port, host):
+        host = '192.168.1.79'  # client ip
+        port = 4005
 
-                        # send out-going data to server
-                        send_data = pickle.dumps(self.send_data_dict, -1)
-                        client_stream.sendall(send_data)
+        server_ip = input('server IP ...')
 
-    def snd_listen(self):
-        print("mic listener: started!")
-        while self.running:
-            data = np.frombuffer(self.stream.read(self.CHUNK),
-                                 dtype=np.int16)
-            peak = np.average(np.abs(data)) * 2
-            if peak > 2000:
-                bars = "#" * int(50 * peak / 2 ** 16)
-                print("%05d %s" % (peak, bars))
-            self.send_data_dict['mic_level'] = peak / 30000
+        server = (server_ip, 5000)
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((host, port))
+
+        message = input("-> ")
+        while message != 'q':
+            s.sendto(message.encode('utf-8'), server)
+            data, addr = s.recvfrom(1024)
+            data = data.decode('utf-8')
+            print("Received from server: " + data)
+            message = input("-> ")
+        s.close()
+
+    def engine_stream(self):
+        # initiate engine client-server comms
+        self.engine = Client()
 
     async def parent(self):
         print("parent: started!")
         while self.connected:
             async with trio.open_nursery() as nursery:
                 # spawning bass soundbot
-                print("parent: spawning bass bot ...")
-                nursery.start_soon(self.improv(self.bass_bot))
+                if self.bass_bot_flag:
+                    print("parent: spawning bass bot ...")
+                    nursery.start_soon(self.improv(self.bass_bot))
 
                 # spawning sax soundbot
-                print("parent: spawning sax bot ...")
-                nursery.start_soon(self.improv(self.sax_bot))
+                if self.sax_bot_flag:
+                    print("parent: spawning sax bot ...")
+                    nursery.start_soon(self.improv(self.sax_bot))
 
-                # # spawning tromb soundbot
-                # print("parent: spawning tromb bot ...")
-                # nursery.start_soon(self.improv(self.tromb_bot))
+                # spawning tromb soundbot
+                if self.tromb_bot_flag:
+                    print("parent: spawning tromb bot ...")
+                    nursery.start_soon(self.improv(self.tromb_bot))
 
 
     def improv(self, bot):
+
+        # todo grab data direct from engine client e.g. = self.client.got_dict['master etc
+
         raw_data_from_dict = self.got_dict['master_output']
         bot.make_sound(raw_data_from_dict)
 
     def parent_go(self):
-        # start the whole performance with the intro
-        # then into drum solo ready for threading to kick in
-        self.play_intro()
+        # wait for intro to finish
+        while self.running:
+            if not self.improv:
+                sleep(0.1)
 
         # then start inprovisers
-        while self.running:
-            if not self.connected:
-                sleep(1)
             else:
                 trio.run(self.parent)
 
@@ -155,11 +148,34 @@ class Client:
 
     def main(self):
         # All other IO is ok as a single Trio thread inside self.client
-        tasks = [self.snd_listen, self.client_stream, self.parent_go]
+        tasks = [self.conducter, self.engine_stream, self.parent_go]
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-            futures = {executor.submit(task): task for task in tasks}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as self.executor:
+            futures = {self.executor.submit(task): task for task in tasks}
+
+    # this func organises the overall composition of the performance
+    # starts with intro, then opens the conditions for improv,
+    # then closes them for outro
+    def conducter(self):
+        # start the whole performance with the intro
+        # then into drum solo ready for threading to kick in
+        self.play_intro()
+
+        now = time()
+        while time() < now + 180: # = 3 min improv
+            self.improv = True
+        self.improv = False
+
+        # then play outro
+        #self.play_outro()
+
+        # terminate all threads etc
+        self.engine.terminate()
+        self.terminate()
+
+    def terminate(self):
+        self.executor.shutdown()
 
 if __name__ == '__main__':
-    cl = Client()
-    cl.main()
+    mstr = Master()
+    mstr.main()
