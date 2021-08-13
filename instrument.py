@@ -4,14 +4,16 @@ and controls a robot movement using serial.
 
 NOTE - this will need to be initiated as an independent thread or Trio nursery"""
 
+import socket
 from time import sleep
 from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio as play
 from glob import glob
 
 class Robot:
-    def __init__(self, instrument, port, addr):
+    def __init__(self, local_ip, instrument, port, addr):
         print(f'instantiated {instrument} bot, on port {port}')
+        this_ip = local_ip
         self.instrument = instrument
         self.PORT = port
         self.IP_ADDR = addr
@@ -28,6 +30,13 @@ class Robot:
             self.pan_law = 0.5
         else:
             self.pan_law = 0
+
+
+        host = this_ip  # client ip (this laptop)
+        self.server = (self.IP_ADDR, self.PORT)
+
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s.bind((host, port))
 
     def make_sound(self, incoming_raw_data):
         while True:
@@ -52,9 +61,12 @@ class Robot:
             self.move_bot(incoming_raw_data, wait_time)
 
     def move_bot(self, move_data, wait_time):
-        print ('made it to bot move')
+        # print ('made it to bot move')
 
-        # todo send a command to make the bot move/ stop old move and start new
+        self.s.sendto(move_data.encode('utf-8'), self.server)
+        data, addr = self.s.recvfrom(1024)
+        data = data.decode('utf-8')
+        print("Received from server: " + data)
 
         sleep(wait_time)
 

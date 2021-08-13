@@ -24,20 +24,18 @@ import trio
 import concurrent.futures
 import socket
 from engine_client import Client
-import pickle
-import pyaudio
-import numpy as np
-from random import random
 from time import sleep, time
 
 class Master:
-    def __init__(self):
-        self.running = False
+    def __init__(self, ip_list):
+        # own list of ip's for robots
+        self.ip_list = ip_list
 
         # get own ip address
-        ip = socket.gethostbyname(socket.gethostname())
-        self.HOST = ip  # Client IP (this)
+        self.ip = socket.gethostbyname(socket.gethostname())
+        self.HOST = self.ip  # Client IP (this)
         self.PORT = 5000
+        self.running = False
 
 
         # # instantiate all performer class's
@@ -66,25 +64,21 @@ class Master:
         # # init got dict
         # self.got_dict = {}
 
-    def make_connection(self, port, host):
-        host = '192.168.1.79'  # client ip
-        port = 4005
+    def make_connection(self):
+        robot_list = ['bass', 'sax', 'tromb']
+        list_pos = 0
 
-        server_ip = input('server IP ...')
+        # instantiate a robot here
 
-        server = (server_ip, 5000)
+        # get ip address
+        bot_ip = self.ip_list[list_pos]
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind((host, port))
+        if bot_ip != 'x':
+            self.bot = Robot(local_ip=self.ip, instrument=robot_list[list_pos], port=5000, addr=ip)
+            self.bot_flag = True
+            print(f'created {self.bot.instrument}')
 
-        message = input("-> ")
-        while message != 'q':
-            s.sendto(message.encode('utf-8'), server)
-            data, addr = s.recvfrom(1024)
-            data = data.decode('utf-8')
-            print("Received from server: " + data)
-            message = input("-> ")
-        s.close()
+        list_pos += 1
 
     def engine_stream(self):
         # initiate engine client-server comms
@@ -117,15 +111,15 @@ class Master:
         # hand it to which ever bot is calling for it
         bot.make_sound(raw_data_from_dict)
 
-    # def parent_go(self):
-    #     # wait for intro to finish
-    #     while self.running:
-    #         if not self.improv:
-    #             sleep(0.1)
-    #
-    #     # then start improvisers
-    #         else:
-    #             trio.run(self.parent)
+    def parent_go(self):
+        # wait for intro to finish
+        while self.running:
+            if not self.improv:
+                sleep(0.1)
+
+        # then start improvisers
+            else:
+                trio.run(self.parent)
 
     # play the intro head and wait to finish
     def play_intro(self):
@@ -146,7 +140,9 @@ class Master:
 
     def main(self):
         # Thread the conductor, engine stream and each of the robot objects
-        tasks = [self.conducter, self.engine_stream]
+        tasks = [self.conducter,
+                 self.engine_stream,
+                 self.parent_go]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = {executor.submit(task): task for task in tasks}
@@ -154,19 +150,22 @@ class Master:
     # this func organises the overall composition of the performance
     def conducter(self):
         # wait for engine stream to work
-        while self.engine.connected:
-            self.running = True
-            # start the whole performance with the intro
-            self.play_intro()
+        while not self.running:
+            sleep(1)
+            if self.engine.connected:
+                self.running = True
 
-            # then opens the conditions for improv,
-            now = time()
-            while time() < now + 180: # = 3 min improv
-                self.improv = True
+        # start the whole performance with the intro
+        self.play_intro()
 
-            # then closes them for outro
-            self.improv = False
-            #self.play_outro()
+        # then opens the conditions for improv,
+        now = time()
+        while time() < now + 180: # = 3 min improv
+            self.improv = True
+
+        # then closes them for outro
+        self.improv = False
+        #self.play_outro()
 
         # terminate all threads etc
         self.engine.terminate()
@@ -177,5 +176,14 @@ class Master:
         pass
 
 if __name__ == '__main__':
-    mstr = Master()
+    # input all ip addresses for robot comms
+    robot_list = ['bass', 'sax', 'tromb']
+    ip_list = []
+
+    for n, inst in enumerate(robot_list):
+        ip = input(f'please enter {robot_list[n]} IP e.g. 192.168.1.123 (x if not available)')
+        if ip != 'x':
+            ip_list += ip
+
+    mstr = Master(ip_list)
     mstr.main()

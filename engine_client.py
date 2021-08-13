@@ -17,6 +17,7 @@ class Client:
     def __init__(self):
         self.running = True
         self.connected = False
+        self.logging = False
 
         self.HOST = '127.0.0.1'  # Client IP (this)
         self.PORT = 65432
@@ -109,7 +110,8 @@ class Client:
                         # get data from stream
                         data = client_stream.recv(1024)
                         self.got_dict = pickle.loads(data)
-                        print(f"receiver: got data {self.got_dict}")
+                        if self.logging:
+                            print(f"receiver: got data {self.got_dict}")
 
                         # send it to the mincer for soundBot control
                         # NB play_with_simpleaudio does not hold thread
