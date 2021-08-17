@@ -19,7 +19,7 @@ this script coordinates
 from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio as play
 from pydub.playback import play
-from instrument import Robot
+from robots import Robot
 import trio
 import concurrent.futures
 import socket
@@ -27,82 +27,17 @@ from engine_client import Client
 from time import sleep, time
 
 class Master:
-    def __init__(self, ip_list):
-        # own list of ip's for robots
-        self.ip_list = ip_list
-
+    def __init__(self):
         # get own ip address
         self.ip = socket.gethostbyname(socket.gethostname())
         self.HOST = self.ip  # Client IP (this)
         self.PORT = 5000
         self.running = False
 
-
-        # # instantiate all performer class's
-        # sax_ip = input('please enter sax bot IP e.g. 192.168.1.123 (x if not available)')
-        # if sax_ip != 'x':
-        #     self.sax_bot = Robot(instrument='sax', port=5000, addr=sax_ip)
-        #     self.sax_bot_flag = True
-        #     self.make_connection()
-        #
-        # tromb_ip = input('please enter tromb bot IP e.g. 192.168.1.123 (x if not available)')
-        # if tromb_ip != 'x':
-        #     self.tromb_bot = Robot(instrument='trombone', port=5000, addr=tromb_ip)
-        #     self.tromb_bot_flag = True
-        #
-        # bass_ip = input('please enter bass bot IP e.g. 192.168.1.123 (x if not available)')
-        # if bass_ip != 'x':
-        #     self.bass_bot = Robot(instrument='bass', port=5000, addr=bass_ip)
-        #     self.bass_bot_flag = True
-
-        # # build send data dict
-        # self.send_data_dict = {'mic_level': 0,
-        #                        'speed': 1,
-        #                        'tempo': 0.1
-        #                        }
-        #
-        # # init got dict
-        # self.got_dict = {}
-
-    def make_connection(self):
-        robot_list = ['bass', 'sax', 'tromb']
-        list_pos = 0
-
-        # instantiate a robot here
-
-        # get ip address
-        bot_ip = self.ip_list[list_pos]
-
-        if bot_ip != 'x':
-            self.bot = Robot(local_ip=self.ip, instrument=robot_list[list_pos], port=5000, addr=ip)
-            self.bot_flag = True
-            print(f'created {self.bot.instrument}')
-
-        list_pos += 1
-
     def engine_stream(self):
         # initiate engine client-server comms
         self.engine = Client()
         self.engine.main()
-
-    async def parent(self):
-        print("parent: started!")
-        while self.connected:
-            async with trio.open_nursery() as nursery:
-                # spawning bass soundbot
-                if self.bass_bot_flag:
-                    print("parent: spawning bass bot ...")
-                    nursery.start_soon(self.improv(self.bass_bot))
-
-                # spawning sax soundbot
-                if self.sax_bot_flag:
-                    print("parent: spawning sax bot ...")
-                    nursery.start_soon(self.improv(self.sax_bot))
-
-                # spawning tromb soundbot
-                if self.tromb_bot_flag:
-                    print("parent: spawning tromb bot ...")
-                    nursery.start_soon(self.improv(self.tromb_bot))
 
     def improv(self, bot):
         # grab raw data from engine stream
@@ -111,7 +46,32 @@ class Master:
         # hand it to which ever bot is calling for it
         bot.make_sound(raw_data_from_dict)
 
-    def parent_go(self):
+    def robots(self):
+        # make instrument bots here
+        # instantiate the robots
+        self.bass_bot = Robot('bass', '192.168.1.124', 4005)
+        self.sax_bot = Robot('sax', '192.168.1.123', 4006)
+        self.tromb_bot = Robot('tromb', '192.168.1.125', 4007)
+
+        trio.run(self.parent)
+
+    async def parent(self):
+        print("parent: started!")
+        async with trio.open_nursery() as nursery:
+            # spawning sax soundbot
+            print("parent: spawning sax bot ...")
+            nursery.start_soon(self.bot_stuff(self.sax_bot))
+
+            # spawning bass soundbot
+            print("parent: spawning bass bot ...")
+            nursery.start_soon(self.bot_stuff(self.bass_bot))
+
+            # spawning tromb soundbot
+            print("parent: spawning tromb bot ...")
+            nursery.start_soon(self.bot_stuff(self.tromb_bot))
+
+
+    async def bot_stuff(self, bot):
         # wait for intro to finish
         while self.running:
             if not self.improv:
@@ -119,7 +79,7 @@ class Master:
 
         # then start improvisers
             else:
-                trio.run(self.parent)
+                self.improv(bot)
 
     # play the intro head and wait to finish
     def play_intro(self):
@@ -138,11 +98,12 @@ class Master:
         # play and wait for it to finish
         play(mixed_intro)
 
+
     def main(self):
         # Thread the conductor, engine stream and each of the robot objects
         tasks = [self.conducter,
                  self.engine_stream,
-                 self.parent_go]
+                 self.robots]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = {executor.submit(task): task for task in tasks}
@@ -161,10 +122,10 @@ class Master:
         # then opens the conditions for improv,
         now = time()
         while time() < now + 180: # = 3 min improv
-            self.improv = True
+            self.improv_go = True
 
         # then closes them for outro
-        self.improv = False
+        self.improv_go = False
         #self.play_outro()
 
         # terminate all threads etc
@@ -176,14 +137,5 @@ class Master:
         pass
 
 if __name__ == '__main__':
-    # input all ip addresses for robot comms
-    robot_list = ['bass', 'sax', 'tromb']
-    ip_list = []
-
-    for n, inst in enumerate(robot_list):
-        ip = input(f'please enter {robot_list[n]} IP e.g. 192.168.1.123 (x if not available)')
-        if ip != 'x':
-            ip_list += ip
-
-    mstr = Master(ip_list)
+    mstr = Master()
     mstr.main()
