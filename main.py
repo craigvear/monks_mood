@@ -25,6 +25,7 @@ import concurrent.futures
 import socket
 from engine_client import Client
 from time import sleep, time
+from subprocess import Popen, PIPE
 
 class Master:
     def __init__(self):
@@ -33,6 +34,7 @@ class Master:
         self.HOST = self.ip  # Client IP (this)
         self.PORT = 5000
         self.running = False
+        Popen('python3 engine_server.py', shell=True)
 
     def engine_stream(self):
         # initiate engine client-server comms
@@ -56,29 +58,46 @@ class Master:
         trio.run(self.parent)
 
     async def parent(self):
-        print("parent: started!")
-        async with trio.open_nursery() as nursery:
-            # spawning sax soundbot
-            print("parent: spawning sax bot ...")
-            nursery.start_soon(self.bot_stuff(self.sax_bot))
+        while True:
+            print("parent: started!")
+            async with trio.open_nursery() as nursery:
+                # spawning sax soundbot
+                print("parent: spawning sax bot ...")
+                nursery.start_soon(self.bot_stuff, self.sax_bot)
 
-            # spawning bass soundbot
-            print("parent: spawning bass bot ...")
-            nursery.start_soon(self.bot_stuff(self.bass_bot))
+                # spawning bass soundbot
+                print("parent: spawning bass bot ...")
+                nursery.start_soon(self.bot_stuff, self.bass_bot)
 
-            # spawning tromb soundbot
-            print("parent: spawning tromb bot ...")
-            nursery.start_soon(self.bot_stuff(self.tromb_bot))
+                # spawning tromb soundbot
+                print("parent: spawning tromb bot ...")
+                nursery.start_soon(self.bot_stuff, self.tromb_bot)
 
 
     async def bot_stuff(self, bot):
+        # while True:
+        #     print(f'waiting {bot}')
+        #     await trio.sleep(1)
+
+    # async def bot_stuffB(self, bot):
+    #     while True:
+    #         print(f'waiting {bot}')
+    #         sleep(1)
+    #
+    # async def bot_stuffC(self, bot):
+    #     while True:
+    #         print(f'waiting {bot}')
+    #         sleep(1)
+
         # wait for intro to finish
-        while self.running:
+        print(f'1. running bot stuff for {bot.name}')
+        while True:
             if not self.improv:
-                sleep(0.1)
+                await trio.sleep(0.1)
 
         # then start improvisers
             else:
+                print(f'2. improvising bot stuff for {bot.name}')
                 self.improv(bot)
 
     # play the intro head and wait to finish
@@ -96,7 +115,10 @@ class Master:
         mixed_intro = bass.overlay(alfieLeft)
 
         # play and wait for it to finish
-        play(mixed_intro)
+        #play(mixed_intro)
+
+        print('temporary sleep process for 10 seconds')
+        sleep(10)
 
 
     def main(self):
@@ -105,7 +127,7 @@ class Master:
                  self.engine_stream,
                  self.robots]
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(task): task for task in tasks}
 
     # this func organises the overall composition of the performance

@@ -270,7 +270,8 @@ class AiDataEngine():
 
                     # make the master output the current value of the stream
                     self.datadict['master_output'] = affect_listen
-                    print(f'\t\t ==============  master move output = {affect_listen}')
+                    if self.master_logging:
+                        print(f'\t\t ==============  master move output = {affect_listen}')
 
                     # calc affect on behaviour
                     # if input stream is LOUD then smash a random fill and break out to Daddy cycle...
