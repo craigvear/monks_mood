@@ -25,7 +25,7 @@ import concurrent.futures
 import socket
 from engine_client import Client
 from time import sleep, time
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 class Master:
     def __init__(self):
@@ -34,6 +34,7 @@ class Master:
         self.HOST = self.ip  # Client IP (this)
         self.PORT = 5000
         self.running = False
+        self.improv_go = False
         Popen('python3 engine_server.py', shell=True)
 
     def engine_stream(self):
@@ -43,17 +44,64 @@ class Master:
 
     def improv(self, bot):
         # grab raw data from engine stream
-        raw_data_from_dict = self.engine.got_dict['master_output']
+        while self.improv_go:
+            raw_data_from_dict = self.engine.got_dict['master_output']
+            rhythm_rate = self.engine.got_dict['rhythm_rate']
+            print(f'got {raw_data_from_dict}, for {bot.NAME}')
 
-        # hand it to which ever bot is calling for it
-        bot.make_sound(raw_data_from_dict)
+            # hand it to which ever bot is calling for it
+            bot.make_sound(raw_data_from_dict, rhythm_rate)
+
+    def bass_bot(self):
+        self.bass_bot = Robot('bass', '192.168.1.124', 4005)
+        # wait for intro to finish
+        print(f'1. running bot stuff for bass bot')
+        while True:
+            if not self.improv_go:
+                sleep(0.1)
+
+            # then start improvisers
+            else:
+                print(f'2. improvising bot stuff for bass bot')
+
+                while True:
+                    self.improv(self.bass_bot)
+
+    def sax_bot(self):
+        self.sax_bot = Robot('sax', '192.168.1.125', 4006)
+        # wait for intro to finish
+        print(f'1. running bot stuff for sax bot')
+        while True:
+            if not self.improv_go:
+                sleep(0.1)
+
+            # then start improvisers
+            else:
+                print(f'2. improvising bot stuff for sax bot')
+                while True:
+                    self.improv(self.sax_bot)
+
+    def tromb_bot(self):
+        self.tromb_bot = Robot('tromb', '192.168.1.126', 4007)
+        # wait for intro to finish
+        print(f'1. running bot stuff for tromb bot')
+        while True:
+            if not self.improv_go:
+                sleep(0.1)
+
+            # then start improvisers
+            else:
+                print(f'2. improvising bot stuff for tromb bot')
+                while True:
+                    self.improv(self.tromb_bot)
+
 
     def robots(self):
         # make instrument bots here
         # instantiate the robots
-        self.bass_bot = Robot('bass', '192.168.1.124', 4005)
+        # self.bass_bot = Robot('bass', '192.168.1.124', 4005)
         self.sax_bot = Robot('sax', '192.168.1.123', 4006)
-        self.tromb_bot = Robot('tromb', '192.168.1.125', 4007)
+        # self.tromb_bot = Robot('tromb', '192.168.1.125', 4007)
 
         trio.run(self.parent)
 
@@ -65,13 +113,13 @@ class Master:
                 print("parent: spawning sax bot ...")
                 nursery.start_soon(self.bot_stuff, self.sax_bot)
 
-                # spawning bass soundbot
-                print("parent: spawning bass bot ...")
-                nursery.start_soon(self.bot_stuff, self.bass_bot)
-
-                # spawning tromb soundbot
-                print("parent: spawning tromb bot ...")
-                nursery.start_soon(self.bot_stuff, self.tromb_bot)
+                # # spawning bass soundbot
+                # print("parent: spawning bass bot ...")
+                # nursery.start_soon(self.bot_stuff, self.bass_bot)
+                #
+                # # spawning tromb soundbot
+                # print("parent: spawning tromb bot ...")
+                # nursery.start_soon(self.bot_stuff, self.tromb_bot)
 
 
     async def bot_stuff(self, bot):
@@ -79,25 +127,25 @@ class Master:
         #     print(f'waiting {bot}')
         #     await trio.sleep(1)
 
-    # async def bot_stuffB(self, bot):
-    #     while True:
-    #         print(f'waiting {bot}')
-    #         sleep(1)
-    #
-    # async def bot_stuffC(self, bot):
-    #     while True:
-    #         print(f'waiting {bot}')
-    #         sleep(1)
+        # async def bot_stuffB(self, bot):
+        #     while True:
+        #         print(f'waiting {bot}')
+        #         sleep(1)
+        #
+        # async def bot_stuffC(self, bot):
+        #     while True:
+        #         print(f'waiting {bot}')
+        #         sleep(1)
 
         # wait for intro to finish
-        print(f'1. running bot stuff for {bot.name}')
+        print(f'1. running bot stuff for {bot.NAME}')
         while True:
-            if not self.improv:
+            if not self.improv_go:
                 await trio.sleep(0.1)
 
         # then start improvisers
             else:
-                print(f'2. improvising bot stuff for {bot.name}')
+                print(f'2. improvising bot stuff for {bot.NAME}')
                 self.improv(bot)
 
     # play the intro head and wait to finish
@@ -120,16 +168,6 @@ class Master:
         print('temporary sleep process for 10 seconds')
         sleep(10)
 
-
-    def main(self):
-        # Thread the conductor, engine stream and each of the robot objects
-        tasks = [self.conducter,
-                 self.engine_stream,
-                 self.robots]
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {executor.submit(task): task for task in tasks}
-
     # this func organises the overall composition of the performance
     def conducter(self):
         # wait for engine stream to work
@@ -144,7 +182,9 @@ class Master:
         # then opens the conditions for improv,
         now = time()
         while time() < now + 180: # = 3 min improv
+            # print(time())
             self.improv_go = True
+            sleep(1)
 
         # then closes them for outro
         self.improv_go = False
@@ -157,6 +197,15 @@ class Master:
     def terminate(self):
         #self.executor.shutdown()
         pass
+
+    def main(self):
+        # Thread the conductor, engine stream and each of the robot objects
+        tasks = [self.conducter,
+                 self.engine_stream,
+                 self.sax_bot]
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
+            futures = {executor.submit(task): task for task in tasks}
 
 if __name__ == '__main__':
     mstr = Master()

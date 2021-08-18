@@ -33,7 +33,7 @@ import pickle
 class MoveRNN:
     def __init__(self):
         print('MoveRNN initialization')
-        self.move_rnn = load_model('models/EMR-v4_RNN_skeleton_data.nose.x.h5')
+        self.move_rnn = load_model('models/EMR-3_RNN_skeleton_data.nose.x.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -43,7 +43,7 @@ class MoveRNN:
 class AffectRNN:
     def __init__(self):
         print('AffectRNN initialization')
-        self.affect_rnn = load_model('models/EMR-v4_RNN_bitalino.h5')
+        self.affect_rnn = load_model('models/EMR-3_RNN_bitalino.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -53,7 +53,7 @@ class AffectRNN:
 class MoveAffectCONV2:
     def __init__(self):
         print('MoveAffectCONV2 initialization')
-        self.move_affect_conv2 = load_model('models/EMR-v4_conv2D_move-affect.h5')
+        self.move_affect_conv2 = load_model('models/EMR-3_conv2D_move-affect.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -63,7 +63,7 @@ class MoveAffectCONV2:
 class AffectMoveCONV2:
     def __init__(self):
         print('AffectMoveCONV2 initialization')
-        self.affect_move_conv2 = load_model('models/EMR-v4_conv2D_affect-move.h5')
+        self.affect_move_conv2 = load_model('models/EMR-3_conv2D_affect-move.h5')
 
     def predict(self, in_val):
         # predictions and input with localval

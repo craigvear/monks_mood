@@ -17,7 +17,7 @@ class Client:
     def __init__(self):
         self.running = True
         self.connected = False
-        self.logging = False
+        self.logging = True
 
         self.HOST = '127.0.0.1'  # Client IP (this)
         self.PORT = 65432
@@ -98,7 +98,7 @@ class Client:
     def client(self):
         print("client: started!")
         while self.running:
-            print(f"client: connecting to {self.HOST}:{self.PORT} ..... start engine_server in iTERM NOW!!!!!!")
+            print(f"client: connecting to {self.HOST}:{self.PORT} ..... starting engine_server in Popen")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind((self.HOST, self.PORT))
                 s.listen()
