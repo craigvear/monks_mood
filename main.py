@@ -39,11 +39,19 @@ class Master:
         self.improv_go = False
 
         # robot instrument vars
-        self.pan_law = 0
-        audio_path = 'assets/alfie.mp3'
-        self.audio_file = AudioSegment.from_mp3(audio_path)
-        self.audio_file_len_ms = self.audio_file.duration_seconds * 1000
-        print(f'audio dur in msecs = {self.audio_file_len_ms}')
+        # globs for sax
+        self.pan_law_sax = -0.5
+        audio_path_sax = 'assets/alfie.mp3'
+        self.audio_file_sax = AudioSegment.from_mp3(audio_path_sax)
+        self.audio_file_len_ms_sax = self.audio_file_sax.duration_seconds * 1000
+
+        # globs for bass
+        self.pan_law_bass = 0
+        audio_path_bass = 'assets/bass.mp3'
+        self.audio_file_bass = AudioSegment.from_mp3(audio_path_bass)
+        self.audio_file_len_ms_bass = self.audio_file_bass.duration_seconds * 1000
+
+        # print(f'audio dur in msecs = {self.audio_file_len_ms}')
         Popen('python3 engine_server.py', shell=True)
 
     def engine_stream(self):
@@ -51,39 +59,55 @@ class Master:
         self.engine = Client()
         self.engine.main()
 
-    def make_sound(self, incoming_raw_data, rhythm_rate):
+    def make_sound(self, instrument, incoming_raw_data, rhythm_rate):
         # # temp random num gen
         # rnd = randrange(self.audio_dir_len)
         # print(self.audio_dir[rnd])
         print('making sound')
 
+        if instrument == 'sax':
+            audio_file = self.audio_file_sax
+            audio_file_len_ms = self.audio_file_len_ms_sax
+            pan_law = self.pan_law_sax
+
+        elif instrument == 'bass':
+            audio_file = self.audio_file_bass
+            audio_file_len_ms = self.audio_file_len_ms_bass
+            pan_law = self.pan_law_bass
+
         # rescale incoming raw data
-        audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (self.audio_file_len_ms - 0) + 0)
+        audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (audio_file_len_ms - 0) + 0)
         duration = rhythm_rate + 1000
         end_point = audio_play_position + duration
         print(audio_play_position, end_point, duration)
 
         # make a sound from incoming data
-        snippet = self.audio_file[audio_play_position: end_point]
+        snippet = audio_file[audio_play_position: end_point]
         print('snippet')
 
         # pan snippet
-        pan_snippet = snippet.pan(self.pan_law)
+        pan_snippet = snippet.pan(pan_law)
         print('pan')
 
         # get the robot to move with
-        playsim(snippet)
+        play(pan_snippet)
         print('play')
 
         # prepare wait time and then move bot
         # wait_time = snippet.duration_seconds / 1000
         # self.move_bot(incoming_raw_data, duration)
 
-        sleep(duration/ 1000)
+        # sleep(duration/ 1000)
         print('fininshed a play')
 
     def move_bot(self, move_data, wait_time):
         print ('made it to bot move')
+
+        #######
+        # left for sax
+        # right for bass
+
+
         #
         # self.s.sendto(move_data.encode('utf-8'), self.server)
         # data, addr = self.s.recvfrom(1024)
@@ -92,7 +116,7 @@ class Master:
 
         sleep(wait_time * 10)
 
-    def robot(self):
+    def robot_sax(self):
         # make a serial port connection here
         print('im here1')
         # loop here
@@ -113,7 +137,31 @@ class Master:
             print(raw_data_from_dict, rhythm_rate)
 
             # make a sound & move bot
-            self.make_sound(raw_data_from_dict, rhythm_rate)
+            self.make_sound('sax', raw_data_from_dict, rhythm_rate)
+            print('making a new one')
+
+    def robot_bass(self):
+        # make a serial port connection here
+        print('im here1')
+        # loop here
+        # while self.running:
+        #     print('im here2')
+
+        while not self.improv_go:
+            print('im here3')
+            sleep(1)
+            print('sleeping robot')
+
+    # then start improvisers
+        while self.improv_go:
+            print('im here4')
+            # grab raw data from engine stream
+            raw_data_from_dict = self.engine.got_dict['master_output']
+            rhythm_rate = self.engine.got_dict['rhythm_rate']
+            print(raw_data_from_dict, rhythm_rate)
+
+            # make a sound & move bot
+            self.make_sound('bass', raw_data_from_dict, rhythm_rate)
             print('making a new one')
 
     # play the intro head and wait to finish
@@ -139,8 +187,9 @@ class Master:
         # self.running = True
         # Thread the conductor, engine stream and each of the robot objects
         tasks = [self.conducter,
-                 self.engine_stream]
-                 # self.robot] #
+                 self.engine_stream,
+                 self.robot_sax,
+                 self.robot_bass] #
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {executor.submit(task): task for task in tasks}
