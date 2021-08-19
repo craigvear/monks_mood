@@ -28,6 +28,9 @@ class Robot:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s.bind((self.this_host, port))
 
+        self.pan_law = 0
+
+
     def transmit(self, message):
         self.s.sendto(message.encode('utf-8'), self.server)
         # data, addr = self.s.recvfrom(1024)

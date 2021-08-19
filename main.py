@@ -17,7 +17,7 @@ this script coordinates
 4) the opverall organisation of intro, improv, outro"""
 
 from pydub import AudioSegment
-from pydub.playback import _play_with_simpleaudio as play
+from pydub.playback import _play_with_simpleaudio as playsim
 from pydub.playback import play
 from robots import Robot
 import trio
@@ -25,7 +25,7 @@ import concurrent.futures
 import socket
 from engine_client import Client
 from time import sleep, time
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 class Master:
     def __init__(self):
@@ -33,7 +33,17 @@ class Master:
         self.ip = socket.gethostbyname(socket.gethostname())
         self.HOST = self.ip  # Client IP (this)
         self.PORT = 5000
+
+        # inits
         self.running = False
+        self.improv_go = False
+
+        # robot instrument vars
+        self.pan_law = 0
+        audio_path = 'assets/alfie.mp3'
+        self.audio_file = AudioSegment.from_mp3(audio_path)
+        self.audio_file_len_ms = self.audio_file.duration_seconds * 1000
+        print(f'audio dur in msecs = {self.audio_file_len_ms}')
         Popen('python3 engine_server.py', shell=True)
 
     def engine_stream(self):
@@ -41,64 +51,70 @@ class Master:
         self.engine = Client()
         self.engine.main()
 
-    def improv(self, bot):
-        # grab raw data from engine stream
-        raw_data_from_dict = self.engine.got_dict['master_output']
+    def make_sound(self, incoming_raw_data, rhythm_rate):
+        # # temp random num gen
+        # rnd = randrange(self.audio_dir_len)
+        # print(self.audio_dir[rnd])
+        print('making sound')
 
-        # hand it to which ever bot is calling for it
-        bot.make_sound(raw_data_from_dict)
+        # rescale incoming raw data
+        audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (self.audio_file_len_ms - 0) + 0)
+        duration = rhythm_rate + 1000
+        end_point = audio_play_position + duration
+        print(audio_play_position, end_point, duration)
 
-    def robots(self):
-        # make instrument bots here
-        # instantiate the robots
-        self.bass_bot = Robot('bass', '192.168.1.124', 4005)
-        self.sax_bot = Robot('sax', '192.168.1.123', 4006)
-        self.tromb_bot = Robot('tromb', '192.168.1.125', 4007)
+        # make a sound from incoming data
+        snippet = self.audio_file[audio_play_position: end_point]
+        print('snippet')
 
-        trio.run(self.parent)
+        # pan snippet
+        pan_snippet = snippet.pan(self.pan_law)
+        print('pan')
 
-    async def parent(self):
-        while True:
-            print("parent: started!")
-            async with trio.open_nursery() as nursery:
-                # spawning sax soundbot
-                print("parent: spawning sax bot ...")
-                nursery.start_soon(self.bot_stuff, self.sax_bot)
+        # get the robot to move with
+        playsim(snippet)
+        print('play')
 
-                # spawning bass soundbot
-                print("parent: spawning bass bot ...")
-                nursery.start_soon(self.bot_stuff, self.bass_bot)
+        # prepare wait time and then move bot
+        # wait_time = snippet.duration_seconds / 1000
+        # self.move_bot(incoming_raw_data, duration)
 
-                # spawning tromb soundbot
-                print("parent: spawning tromb bot ...")
-                nursery.start_soon(self.bot_stuff, self.tromb_bot)
+        sleep(duration/ 1000)
+        print('fininshed a play')
 
+    def move_bot(self, move_data, wait_time):
+        print ('made it to bot move')
+        #
+        # self.s.sendto(move_data.encode('utf-8'), self.server)
+        # data, addr = self.s.recvfrom(1024)
+        # data = data.decode('utf-8')
+        # print("Received from server: " + data)
 
-    async def bot_stuff(self, bot):
-        # while True:
-        #     print(f'waiting {bot}')
-        #     await trio.sleep(1)
+        sleep(wait_time * 10)
 
-    # async def bot_stuffB(self, bot):
-    #     while True:
-    #         print(f'waiting {bot}')
-    #         sleep(1)
-    #
-    # async def bot_stuffC(self, bot):
-    #     while True:
-    #         print(f'waiting {bot}')
-    #         sleep(1)
+    def robot(self):
+        # make a serial port connection here
+        print('im here1')
+        # loop here
+        # while self.running:
+        #     print('im here2')
 
-        # wait for intro to finish
-        print(f'1. running bot stuff for {bot.name}')
-        while True:
-            if not self.improv:
-                await trio.sleep(0.1)
+        while not self.improv_go:
+            print('im here3')
+            sleep(1)
+            print('sleeping robot')
 
-        # then start improvisers
-            else:
-                print(f'2. improvising bot stuff for {bot.name}')
-                self.improv(bot)
+    # then start improvisers
+        while self.improv_go:
+            print('im here4')
+            # grab raw data from engine stream
+            raw_data_from_dict = self.engine.got_dict['master_output']
+            rhythm_rate = self.engine.got_dict['rhythm_rate']
+            print(raw_data_from_dict, rhythm_rate)
+
+            # make a sound & move bot
+            self.make_sound(raw_data_from_dict, rhythm_rate)
+            print('making a new one')
 
     # play the intro head and wait to finish
     def play_intro(self):
@@ -115,19 +131,18 @@ class Master:
         mixed_intro = bass.overlay(alfieLeft)
 
         # play and wait for it to finish
-        #play(mixed_intro)
-
-        print('temporary sleep process for 10 seconds')
+        # play(mixed_intro)
+        print('gonna sleep for 10 as temp intro')
         sleep(10)
 
-
     def main(self):
+        # self.running = True
         # Thread the conductor, engine stream and each of the robot objects
         tasks = [self.conducter,
-                 self.engine_stream,
-                 self.robots]
+                 self.engine_stream]
+                 # self.robot] #
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {executor.submit(task): task for task in tasks}
 
     # this func organises the overall composition of the performance
@@ -137,14 +152,19 @@ class Master:
             sleep(1)
             if self.engine.connected:
                 self.running = True
+                print('engine running = true')
 
         # start the whole performance with the intro
         self.play_intro()
+        print('I======================   IMPROV GOOOOOOOOOOOOO')
+        self.improv_go = True
 
         # then opens the conditions for improv,
         now = time()
         while time() < now + 180: # = 3 min improv
-            self.improv_go = True
+            # self.improv_go = True
+            print('improving')
+            sleep(1)
 
         # then closes them for outro
         self.improv_go = False
@@ -161,3 +181,4 @@ class Master:
 if __name__ == '__main__':
     mstr = Master()
     mstr.main()
+    # mstr.make_sound(0.12345, 0.12)
