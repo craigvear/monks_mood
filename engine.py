@@ -673,13 +673,13 @@ class Client:
             audio_file = self.audio_file_sax
             audio_file_len_ms = self.audio_file_len_ms_sax
             pan_law = self.pan_law_sax
-            len_delta = random() * 100
+            len_delta = random() * 1000
 
         elif instrument == 'bass':
             audio_file = self.audio_file_bass
             audio_file_len_ms = self.audio_file_len_ms_bass
             pan_law = self.pan_law_bass
-            len_delta = random() * 100
+            len_delta = random() * 1000
 
         # rescale incoming raw data
         audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (audio_file_len_ms - 0) + 0)
