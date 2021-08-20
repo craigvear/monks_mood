@@ -45,7 +45,7 @@ from pydub.playback import play
 class MoveRNN:
     def __init__(self):
         print('MoveRNN initialization')
-        self.move_rnn = load_model('models/EMR-3_RNN_skeleton_data.nose.x.h5')
+        self.move_rnn = load_model('models/EMR-v4_RNN_skeleton_data.nose.x.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -55,7 +55,7 @@ class MoveRNN:
 class AffectRNN:
     def __init__(self):
         print('AffectRNN initialization')
-        self.affect_rnn = load_model('models/EMR-3_RNN_bitalino.h5')
+        self.affect_rnn = load_model('models/EMR-v4_RNN_bitalino.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -65,7 +65,7 @@ class AffectRNN:
 class MoveAffectCONV2:
     def __init__(self):
         print('MoveAffectCONV2 initialization')
-        self.move_affect_conv2 = load_model('models/EMR-3_conv2D_move-affect.h5')
+        self.move_affect_conv2 = load_model('models/EMR-v4_conv2D_move-affect.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -75,7 +75,7 @@ class MoveAffectCONV2:
 class AffectMoveCONV2:
     def __init__(self):
         print('AffectMoveCONV2 initialization')
-        self.affect_move_conv2 = load_model('models/EMR-3_conv2D_affect-move.h5')
+        self.affect_move_conv2 = load_model('models/EMR-v4_conv2D_affect-move.h5')
 
     def predict(self, in_val):
         # predictions and input with localval
@@ -431,7 +431,7 @@ class Client:
 
         elif library == 'pop':
             self.audio_file_sax = AudioSegment.from_wav('assets/vocals.wav')
-            self.audio_file_bass = AudioSegment.from_wav('assets/accompaniment.wav') + 4
+            self.audio_file_bass = AudioSegment.from_wav('assets/accompaniment.wav')
 
         # robot instrument vars
         # globs for sax
@@ -626,7 +626,7 @@ class Client:
 
             # add variability to the individual instrument
             rnd_dur_delta = random()
-            rhythm_rate *= rnd_dur_delta
+            rhythm_rate *= rnd_dur_delta * 8
             print('sax', raw_data_from_dict, rhythm_rate)
 
             # make a sound & move bot
@@ -655,7 +655,7 @@ class Client:
             print('bass', raw_data_from_dict, rhythm_rate)
 
             # add variability to the individual instrument
-            rnd_dur_delta = random()
+            rnd_dur_delta = random() * 4
             rhythm_rate *= rnd_dur_delta
             print('bass', raw_data_from_dict, rhythm_rate)
 
@@ -679,11 +679,13 @@ class Client:
             audio_file = self.audio_file_bass
             audio_file_len_ms = self.audio_file_len_ms_bass
             pan_law = self.pan_law_bass
-            len_delta = random() * 1000
+            len_delta = random() * 500
 
         # rescale incoming raw data
         audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (audio_file_len_ms - 0) + 0)
-        duration = rhythm_rate + len_delta
+        duration = rhythm_rate * len_delta
+        if duration < 0.01:
+            duration = 0.01
         end_point = audio_play_position + duration
         print(audio_play_position, end_point, duration)
 
