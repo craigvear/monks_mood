@@ -17,22 +17,22 @@ this script coordinates
 4) the opverall organisation of intro, improv, outro"""
 
 from pydub import AudioSegment
-from pydub.playback import _play_with_simpleaudio as playsim
+# from pydub.playback import _play_with_simpleaudio as playsim
 from pydub.playback import play
 from robots import Robot
 import trio
 import concurrent.futures
 import socket
-from engine_client import Client
+from engine import Client
 from time import sleep, time
 from subprocess import Popen
 
 class Master:
     def __init__(self):
         # get own ip address
-        self.ip = socket.gethostbyname(socket.gethostname())
-        self.HOST = self.ip  # Client IP (this)
-        self.PORT = 5000
+        # self.ip = socket.gethostbyname(socket.gethostname())
+        # self.HOST = self.ip  # Client IP (this)
+        # self.PORT = 5000
 
         # inits
         self.running = False
@@ -52,12 +52,14 @@ class Master:
         self.audio_file_len_ms_bass = self.audio_file_bass.duration_seconds * 1000
 
         # print(f'audio dur in msecs = {self.audio_file_len_ms}')
-        Popen('python3 engine_server.py', shell=True)
+        #Popen('python3 engine_server.py', shell=True)
+
+        # initiate engine client-server comms
+        self.client = Client()
 
     def engine_stream(self):
-        # initiate engine client-server comms
-        self.engine = Client()
-        self.engine.main()
+        # set engine going
+        self.client.main()
 
     def make_sound(self, instrument, incoming_raw_data, rhythm_rate):
         # # temp random num gen
@@ -132,8 +134,8 @@ class Master:
         while self.improv_go:
             print('im here4')
             # grab raw data from engine stream
-            raw_data_from_dict = self.engine.got_dict['master_output']
-            rhythm_rate = self.engine.got_dict['rhythm_rate']
+            raw_data_from_dict = self.client.got_dict['master_output']
+            rhythm_rate = self.client.got_dict['rhythm_rate']
             print(raw_data_from_dict, rhythm_rate)
 
             # make a sound & move bot
@@ -156,8 +158,8 @@ class Master:
         while self.improv_go:
             print('im here4')
             # grab raw data from engine stream
-            raw_data_from_dict = self.engine.got_dict['master_output']
-            rhythm_rate = self.engine.got_dict['rhythm_rate']
+            raw_data_from_dict = self.client.got_dict['master_output']
+            rhythm_rate = self.client.got_dict['rhythm_rate']
             print(raw_data_from_dict, rhythm_rate)
 
             # make a sound & move bot
@@ -197,11 +199,11 @@ class Master:
     # this func organises the overall composition of the performance
     def conducter(self):
         # wait for engine stream to work
-        while not self.running:
-            sleep(1)
-            if self.engine.connected:
-                self.running = True
-                print('engine running = true')
+        # while not self.running:
+        #     sleep(1)
+        #     if self.engine.connected:
+        #         self.running = True
+        #         print('engine running = true')
 
         # start the whole performance with the intro
         self.play_intro()
@@ -220,7 +222,7 @@ class Master:
         #self.play_outro()
 
         # terminate all threads etc
-        self.engine.terminate()
+        self.client.terminate()
         self.terminate()
 
     def terminate(self):

@@ -11,6 +11,7 @@ import concurrent.futures
 from random import random
 import trio
 from time import sleep
+from engine_server import AiDataEngine
 
 
 class Client:
@@ -20,7 +21,7 @@ class Client:
         self.logging = False
 
         self.HOST = '127.0.0.1'  # Client IP (this)
-        self.PORT = 65432
+        self.PORT = 8000
         # Port to listen on (non-privileged ports are > 1023)
 
         self.CHUNK = 2 ** 11
@@ -40,6 +41,9 @@ class Client:
 
         # init got dict
         self.got_dict = {}
+
+        # instantiate the server
+        self.engine = AiDataEngine()
 
     def snd_listen(self):
         print("mic listener: started!")
@@ -95,33 +99,33 @@ class Client:
     #         # make a sound at calc duration
     #         self.bot_right.play_sound(right_master_data, right_duration)
 
-    def client(self):
-        print("client: started!")
-        while self.running:
-            print(f"client: connecting to {self.HOST}:{self.PORT} ..... start engine_server in iTERM NOW!!!!!!")
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind((self.HOST, self.PORT))
-                s.listen()
-                client_stream, addr = s.accept()
-                with client_stream:
-                    print('Connected by', addr)
-                    self.connected = True
-                    while self.connected:
-                        # get data from stream
-                        data = client_stream.recv(1024)
-                        self.got_dict = pickle.loads(data)
-                        if self.logging:
-                            print(f"receiver: got data {self.got_dict}")
-
-                        # send it to the mincer for soundBot control
-                        # NB play_with_simpleaudio does not hold thread
-                        # master_data = self.got_dict['master_output']
-                        # rhythm_rate = self.got_dict['rhythm_rate']
-                        # self.mincer(master_data, rhythm_rate)
-
-                        # send out-going data to server
-                        send_data = pickle.dumps(self.send_data_dict, -1)
-                        client_stream.sendall(send_data)
+    # def client(self):
+    #     print("client: started!")
+    #     while self.running:
+    #         print(f"client: connecting to {self.HOST}:{self.PORT} ..... start engine_server in iTERM NOW!!!!!!")
+    #         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #             s.bind((self.HOST, self.PORT))
+    #             s.listen()
+    #             client_stream, addr = s.accept()
+    #             with client_stream:
+    #                 print('Connected by', addr)
+    #                 self.connected = True
+    #                 while self.connected:
+    #                     # get data from stream
+    #                     data = client_stream.recv(1024)
+    #                     self.got_dict = pickle.loads(data)
+    #                     if self.logging:
+    #                         print(f"receiver: got data {self.got_dict}")
+    #
+    #                     # send it to the mincer for soundBot control
+    #                     # NB play_with_simpleaudio does not hold thread
+    #                     # master_data = self.got_dict['master_output']
+    #                     # rhythm_rate = self.got_dict['rhythm_rate']
+    #                     # self.mincer(master_data, rhythm_rate)
+    #
+    #                     # send out-going data to server
+    #                     send_data = pickle.dumps(self.send_data_dict, -1)
+    #                     client_stream.sendall(send_data)
 
     # async def parent(self):
     #     print("parent: started!")
@@ -135,17 +139,33 @@ class Client:
     #             print("parent: spawning right bot ...")
     #             nursery.start_soon(self.right)
 
-    def parent_go(self):
-        while self.running:
-            if not self.connected:
-                sleep(1)
-            else:
-                trio.run(self.parent)
+    # def parent_go(self):
+    #     while self.running:
+    #         if not self.connected:
+    #             sleep(1)
+    #         else:
+    #             trio.run(self.parent)
+
+    def data_exchange(self):
+        # send self.send_data_dict
+        self.engine.parse_got_dict(self.send_data_dict)
+
+        # get self.datadict from engine
+        self.got_dict = self.engine.datadict
+
+        # sync with engine & stop freewheeling
+        sleep_dur = self.got_dict['rhythm_rate']
+        sleep(sleep_dur)
+
+
+    def engine(self):
+        # set the engine off
+        self.engine.go()
 
     def main(self):
         # snd_listen and client need dependent threads.
         # All other IO is ok as a single Trio thread inside self.client
-        tasks = [self.snd_listen, self.client]
+        tasks = [self.snd_listen, self.engine, self.data_exchange]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = {executor.submit(task): task for task in tasks}
