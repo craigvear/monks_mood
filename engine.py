@@ -142,9 +142,9 @@ class AiDataEngine():
 
         # logging on/off switches
         self.net_logging = False
-        self.master_logging = True
+        self.master_logging = False
         self.streaming_logging = False
-        self.affect_logging = True
+        self.affect_logging = False
 
     # --------------------------------------------------
     #
@@ -420,24 +420,27 @@ controls microphone stream and organise all audio responses"""
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, library):
         self.running = True
         self.connected = False
         self.logging = False
 
+        if library == 'jazz':
+            self.audio_file_sax = AudioSegment.from_mp3('assets/alfie.mp3')
+            self.audio_file_bass = AudioSegment.from_mp3('assets/bass.mp3') + 4
+
+        elif library == 'pop':
+            self.audio_file_sax = AudioSegment.from_wav('assets/vocals.wav')
+            self.audio_file_bass = AudioSegment.from_wav('assets/accompaniment.wav') + 4
+
         # robot instrument vars
         # globs for sax
         self.pan_law_sax = -0.5
-        audio_path_sax = 'assets/alfie.mp3'
-        self.audio_file_sax = AudioSegment.from_mp3(audio_path_sax)
         self.audio_file_len_ms_sax = self.audio_file_sax.duration_seconds * 1000
 
         # globs for bass
         self.pan_law_bass = 0
-        audio_path_bass = 'assets/bass.mp3'
-        self.audio_file_bass = AudioSegment.from_mp3(audio_path_bass) + 6
         self.audio_file_len_ms_bass = self.audio_file_bass.duration_seconds * 1000
-
 
         # self.HOST = '127.0.0.1'  # Client IP (this)
         # self.PORT = 8000
@@ -619,11 +622,14 @@ class Client:
             # grab raw data from engine stream
             raw_data_from_dict = self.got_dict['master_output']
             rhythm_rate = self.got_dict['rhythm_rate']
-            print(raw_data_from_dict, rhythm_rate)
+            print('sax', raw_data_from_dict, rhythm_rate)
 
-            # make a sound & move bot
+            # add variability to the individual instrument
             rnd_dur_delta = random()
             rhythm_rate *= rnd_dur_delta
+            print('sax', raw_data_from_dict, rhythm_rate)
+
+            # make a sound & move bot
             self.make_sound('sax', raw_data_from_dict, rhythm_rate)
             print('making a new one')
 
@@ -646,11 +652,14 @@ class Client:
             # grab raw data from engine stream
             raw_data_from_dict = self.got_dict['master_output']
             rhythm_rate = self.got_dict['rhythm_rate']
-            print(raw_data_from_dict, rhythm_rate)
+            print('bass', raw_data_from_dict, rhythm_rate)
 
-            # make a sound & move bot
+            # add variability to the individual instrument
             rnd_dur_delta = random()
             rhythm_rate *= rnd_dur_delta
+            print('bass', raw_data_from_dict, rhythm_rate)
+
+            # make a sound & move bot
             self.make_sound('bass', raw_data_from_dict, rhythm_rate)
             print('making a new one')
 
@@ -664,15 +673,17 @@ class Client:
             audio_file = self.audio_file_sax
             audio_file_len_ms = self.audio_file_len_ms_sax
             pan_law = self.pan_law_sax
+            len_delta = random() * 100
 
         elif instrument == 'bass':
             audio_file = self.audio_file_bass
             audio_file_len_ms = self.audio_file_len_ms_bass
             pan_law = self.pan_law_bass
+            len_delta = random() * 100
 
         # rescale incoming raw data
         audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (audio_file_len_ms - 0) + 0)
-        duration = rhythm_rate + 1000
+        duration = rhythm_rate + len_delta
         end_point = audio_play_position + duration
         print(audio_play_position, end_point, duration)
 
@@ -696,6 +707,8 @@ class Client:
         print('fininshed a play')
 
 if __name__ == '__main__':
-    cl = Client()
+    # library = 'jazz'
+    library = 'pop'
+    cl = Client(library)
     # cl.main()
 
