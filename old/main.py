@@ -103,13 +103,13 @@ class Master:
     # play the intro head and wait to finish
     def play_intro(self):
         # get sax's part
-        alfie = AudioSegment.from_wav('assets/alfie_intro.wav')
+        alfie = AudioSegment.from_wav('../assets/alfie_intro.wav')
 
         # pan sax
         alfieLeft = alfie.pan(-0.5)
 
         # get bass part
-        bass = AudioSegment.from_wav('assets/bass_intro.wav')
+        bass = AudioSegment.from_wav('../assets/bass_intro.wav')
 
         # mix them all together
         mixed_intro = bass.overlay(alfieLeft)

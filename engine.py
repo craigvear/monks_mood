@@ -25,8 +25,6 @@ from time import sleep
 from pydub import AudioSegment
 from pydub.playback import play
 
-# import robot scripts
-from robot.rerobot import Robot
 
 # --------------------------------------------------
 #
@@ -345,7 +343,32 @@ class Client:
         self.running = True
         self.connected = False
         self.logging = False
+
+        # is the robot connected
         self.robot_connected = True
+        self.direction = 1
+
+        if self.robot_connected:
+            # import robot scripts
+            from arm.arm import Arm
+            # from robot.rerobot import Robot
+
+            # instantiate robot comms
+            # self.robot_robot = Robot()
+            self.robot_robot = Arm()
+            # self.robot_robot.reset_arm()
+
+            # prepare for movement
+            # LED's ready fpr drawing
+            self.robot_robot.led_blue()
+
+            # get arm into draw mode
+            self.robot_robot.draw_mode_status = True
+            self.robot_robot.first_draw_move = True
+            self.robot_robot.pen_drawing_status = False
+
+            # goto position
+            self.robot_robot.wait_ready()
 
         if library == 'jazz':
             self.audio_file_sax = AudioSegment.from_mp3('assets/alfie.mp3')
@@ -390,10 +413,6 @@ class Client:
         # instantiate the server
         self.engine = AiDataEngine()
 
-        # instantiate robot comms
-        if self.robot_connected:
-            self.robot_robot = Robot()
-
         # # set the ball rolling
         # self.main()
 
@@ -424,7 +443,7 @@ class Client:
 
             # sync with engine & stop freewheeling
             sleep_dur = self.got_dict['rhythm_rate']
-            print('data exchange')
+            # print('data exchange')
             sleep(sleep_dur)
 
     def engine(self):
@@ -441,7 +460,7 @@ class Client:
                  self.robot_sax,
                  self.robot_bass]
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {executor.submit(task): task for task in tasks}
 
     def robot_sax(self):
@@ -520,7 +539,7 @@ class Client:
             audio_file = self.audio_file_bass
             audio_file_len_ms = self.audio_file_len_ms_bass
             pan_law = self.pan_law_bass
-            len_delta = random() * 500
+            len_delta = random() * 1000
 
         # rescale incoming raw data
         audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (audio_file_len_ms - 0) + 0)
@@ -551,12 +570,45 @@ class Client:
 
     def move_robot(self, incoming_data, duration):
         # move left then right
-        direction = 1
-        degrees = 20 * direction
+        if duration > 0.5:
 
-        # send a simple move instruction then get out of here
-        self.robot_robot.rotate(degrees)
-        direction *= -1
+            rnd = randrange(4)
+
+            if rnd == 0:
+                # def draw_arm_fwd(self):
+                    self.robot_robot.move_joint_relative_speed(3, -25, 30)
+
+            elif rnd == 1:
+                # def draw_arm_bkwd(self):
+                    self.robot_robot.move_joint_relative_speed(3, 25, 30)
+
+            elif rnd == 2:
+                # def draw_arm_right(self):
+                    self.robot_robot.move_joint_relative_speed(1, 25, 30)
+
+            elif rnd == 3:
+                # def /draw_arm_left(self):
+                    self.robot_robot.move_joint_relative_speed(1, -25, 30)
+
+
+            # if self.direction > 0:
+            #     # degrees = 20
+            #     self.robot_robot.open_claw()
+            #
+            # else:
+            #     # degrees = -20
+            #     self.robot_robot.close_claw()
+
+            # # send a simple move instruction then get out of here
+            # self.robot_robot.rotate(degrees)
+
+            # x = randrange(750)
+            # y = randrange(900)
+            #
+            # self.robot_robot.executeMove([x, y])
+
+        # # change direction for next move
+        # self.direction *= -1
 
 
 if __name__ == '__main__':
