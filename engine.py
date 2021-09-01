@@ -319,80 +319,6 @@ class AiDataEngine():
                     # and wait for a cycle
                     sleep(self.rhythm_rate)
 
-    # --------------------------------------------------
-    # #
-    # # parent threading solution
-    # #
-    # # --------------------------------------------------
-    #
-    # async def flywheel(self):
-    #     print("parent: started!")
-    #     while self.running:
-    #         # print("parent: connecting to 127.0.0.1:{}".format(self.PORT))
-    #         # client_stream = await trio.open_tcp_stream(self.IP_ADDR, self.PORT)
-    #         # async with client_stream:
-    #         #     # self.interrupt_bang = True
-    #         async with trio.open_nursery() as nursery:
-    #             # spawning all the data making
-    #             print("parent: spawning making data ...")
-    #             nursery.start_soon(self.make_data)
-    #
-    #             # spawning affect listener and master clocks
-    #             print("parent: spawning affect listener and clocks ...")
-    #             nursery.start_soon(self.affect)
-    #
-    #             # # spawning listening port for user input
-    #             # print("parent: spawning receiver...")
-    #             # nursery.start_soon(self.receiver, client_stream)
-    #             #
-    #             # # spawning sending port for output data
-    #             # print("parent: spawning sender...")
-    #             # nursery.start_soon(self.sender, client_stream)
-
-    # --------------------------------------------------
-    #
-    # user accessible methods
-    #
-    # --------------------------------------------------
-
-    # returns the live output from the class to user
-    # async def sender(self, client_stream):
-    #     print("sender: started!")
-    #     while self.running:
-    #         # data = {'master_AI_output': self.datadict.get('master_output'),
-    #         #         'intensity/rhythm': self.datadict.get('self_awareness'),
-    #         #         'affect stream': self.rnd_stream,
-    #         #         'individual NN outs':
-    #         #             {'move RNN': self.datadict.get('move_rnn'),
-    #         #              'affect RNN': self.datadict.get('affect_rnn'),
-    #         #              'move_affect_conv2': self.datadict.get('move_affect_conv2'),
-    #         #              'affect_move_conv2': self.datadict.get('affect_move_conv2'),
-    #         #              'self_awareness': self.datadict.get('self_awareness')
-    #         #              }
-    #         #         }
-    #
-    #         # serialise dict into json for Tx
-    #         serial_data = pickle.dumps(self.datadict, -1)
-    #         if self.streaming_logging:
-    #             print("sender: sending {!r}".format(serial_data))
-    #         #  & send
-    #         await client_stream.send_all(serial_data)
-    #         await trio.sleep(self.rhythm_rate)
-
-    # receives user data from client (typically live audio input)
-    # async def receiver(self, client_stream):
-    #     print("receiver: started!")
-    #     while self.running:
-    #         async for data in client_stream:
-    #             load_data = pickle.loads(data)
-    #             self.parse_got_dict(load_data)
-    #
-    #             # self.datadict['user_in'] = load_data['mic_level']
-    #             if self.streaming_logging:
-    #                 print("receiver: got data {!r}".format(load_data))
-    #         print("receiver: connection closed")
-    #     sys.exit()
-
     def parse_got_dict(self, got_dict):
         self.datadict['user_in'] = got_dict['mic_level']
 
@@ -468,8 +394,8 @@ class Client:
         # instantiate the server
         self.engine = AiDataEngine()
 
-        # set the ball rolling
-        self.main()
+        # # set the ball rolling
+        # self.main()
 
     def snd_listen(self):
         print("mic listener: started!")
@@ -486,91 +412,6 @@ class Client:
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
-
-    # def mincer(self, got_AI_data, rhythm_rate):
-    #     print(f'in the mincer ===== {got_AI_data, rhythm_rate}')
-    #     # tic = time()
-    #     rnd_dur = random()
-    #     duration = rnd_dur + rhythm_rate
-    #
-    #     # make a sound at calc duration
-    #     self.snd.play_sound(got_AI_data, duration)
-    #     # toc = time()
-
-    # async def left(self):
-    #     print('left bot: started')
-    #     while self.connected:
-    #         # get latest data
-    #         left_master_data = self.got_dict['master_output']
-    #         left_rhythm_rate = self.got_dict['rhythm_rate']
-    #
-    #         # calc temp timing
-    #         rnd_dur = random()
-    #         left_duration = rnd_dur + left_rhythm_rate
-    #
-    #         # make a sound at calc duration
-    #         self.bot_left.play_sound(left_master_data, left_duration)
-    #
-    # async def right(self):
-    #     print('right bot: started')
-    #     while self.connected:
-    #         # get latest data
-    #         right_master_data = self.got_dict['master_output']
-    #         right_rhythm_rate = self.got_dict['rhythm_rate']
-    #
-    #         # calc temp timing
-    #         rnd_dur = random()
-    #         right_duration = rnd_dur + right_rhythm_rate
-    #
-    #         # make a sound at calc duration
-    #         self.bot_right.play_sound(right_master_data, right_duration)
-
-    # def client(self):
-    #     print("client: started!")
-    #     while self.running:
-    #         print(f"client: connecting to {self.HOST}:{self.PORT} ..... start engine_server in iTERM NOW!!!!!!")
-    #         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #             s.bind((self.HOST, self.PORT))
-    #             s.listen()
-    #             client_stream, addr = s.accept()
-    #             with client_stream:
-    #                 print('Connected by', addr)
-    #                 self.connected = True
-    #                 while self.connected:
-    #                     # get data from stream
-    #                     data = client_stream.recv(1024)
-    #                     self.got_dict = pickle.loads(data)
-    #                     if self.logging:
-    #                         print(f"receiver: got data {self.got_dict}")
-    #
-    #                     # send it to the mincer for soundBot control
-    #                     # NB play_with_simpleaudio does not hold thread
-    #                     # master_data = self.got_dict['master_output']
-    #                     # rhythm_rate = self.got_dict['rhythm_rate']
-    #                     # self.mincer(master_data, rhythm_rate)
-    #
-    #                     # send out-going data to server
-    #                     send_data = pickle.dumps(self.send_data_dict, -1)
-    #                     client_stream.sendall(send_data)
-
-    # async def parent(self):
-    #     print("parent: started!")
-    #     while self.connected:
-    #         async with trio.open_nursery() as nursery:
-    #             # spawning left independent soundbot
-    #             print("parent: spawning left bot ...")
-    #             nursery.start_soon(self.left)
-    #
-    #             # spawning right independent soundbot
-    #             print("parent: spawning right bot ...")
-    #             nursery.start_soon(self.right)
-
-    # def parent_go(self):
-    #     while self.running:
-    #         if not self.connected:
-    #             sleep(1)
-    #         else:
-    #             trio.run(self.parent)
 
     def data_exchange(self):
         print("data exchange: started!")
@@ -600,7 +441,7 @@ class Client:
                  self.robot_sax,
                  self.robot_bass]
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             futures = {executor.submit(task): task for task in tasks}
 
     def robot_sax(self):
@@ -684,8 +525,8 @@ class Client:
         # rescale incoming raw data
         audio_play_position = int(((incoming_raw_data - 0) / (1 - 0)) * (audio_file_len_ms - 0) + 0)
         duration = rhythm_rate * len_delta
-        if duration < 0.01:
-            duration = 0.01
+        if duration < 0.1:
+            duration = 0.1
         end_point = audio_play_position + duration
         print(audio_play_position, end_point, duration)
 
@@ -697,13 +538,12 @@ class Client:
         pan_snippet = snippet.pan(pan_law)
         print('pan')
 
+        # todo move bot
+        # self.move_bot(incoming_raw_data, duration)
+
         # get the robot to move with
         play(pan_snippet)
         print('play')
-
-        # prepare wait time and then move bot
-        # wait_time = snippet.duration_seconds / 1000
-        # self.move_bot(incoming_raw_data, duration)
 
         # sleep(duration/ 1000)
         print('fininshed a play')
@@ -712,5 +552,7 @@ if __name__ == '__main__':
     # library = 'jazz'
     library = 'pop'
     cl = Client(library)
-    # cl.main()
+
+    # set the ball rolling
+    cl.main()
 
