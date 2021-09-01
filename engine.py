@@ -559,7 +559,8 @@ class Client:
 
         # move bot before making sound
         if self.robot_connected:
-            self.move_robot(incoming_raw_data, duration)
+            if instrument == 'sax':
+                self.move_robot(incoming_raw_data, duration)
 
         # get the robot to move with
         play(pan_snippet)
@@ -570,25 +571,38 @@ class Client:
 
     def move_robot(self, incoming_data, duration):
         # move left then right
-        if duration > 0.5:
+        if duration > 1:
 
-            rnd = randrange(4)
+            rnd_joint = randrange(4)
+            rnd_joint += 1
 
-            if rnd == 0:
-                # def draw_arm_fwd(self):
-                    self.robot_robot.move_joint_relative_speed(3, -25, 30)
+            rnd_direction = randrange(2)
+            if rnd_direction == 1:
+                direction = -20
+            else:
+                direction = 20
 
-            elif rnd == 1:
-                # def draw_arm_bkwd(self):
-                    self.robot_robot.move_joint_relative_speed(3, 25, 30)
+            rnd_speed = randrange(10)
+            rnd_speed *= 10
 
-            elif rnd == 2:
-                # def draw_arm_right(self):
-                    self.robot_robot.move_joint_relative_speed(1, 25, 30)
+            self.robot_robot.move_joint_relative_speed(rnd_joint, direction, rnd_speed)
 
-            elif rnd == 3:
-                # def /draw_arm_left(self):
-                    self.robot_robot.move_joint_relative_speed(1, -25, 30)
+
+            #
+            # if rnd == 0:
+            #     # def draw_arm_fwd(self):
+            #
+            # elif rnd == 1:
+            #     # def draw_arm_bkwd(self):
+            #         self.robot_robot.move_joint_relative_speed(3, 25, 30)
+            #
+            # elif rnd == 2:
+            #     # def draw_arm_right(self):
+            #         self.robot_robot.move_joint_relative_speed(1, 25, 30)
+            #
+            # elif rnd == 3:
+            #     # def /draw_arm_left(self):
+            #         self.robot_robot.move_joint_relative_speed(1, -25, 30)
 
 
             # if self.direction > 0:
