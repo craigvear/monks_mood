@@ -13,25 +13,20 @@ will sit onboard host and operate as Nebula --- its dynamic soul"""
 #
 # --------------------------------------------------
 
-import trio
-from random import randrange, random
+from random import randrange
 from time import time
 from tensorflow.keras.models import load_model
-import sys
-import pickle
-import socket
-import pickle
+
 import pyaudio
 import numpy as np
 import concurrent.futures
-# from sound import SoundBot
 from random import random
-import trio
 from time import sleep
-# from engine_server import AiDataEngine
 from pydub import AudioSegment
-# from pydub.playback import _play_with_simpleaudio as playsim
 from pydub.playback import play
+
+# import robot scripts
+from robot.rerobot import Robot
 
 # --------------------------------------------------
 #
@@ -350,6 +345,7 @@ class Client:
         self.running = True
         self.connected = False
         self.logging = False
+        self.robot_connected = True
 
         if library == 'jazz':
             self.audio_file_sax = AudioSegment.from_mp3('assets/alfie.mp3')
@@ -393,6 +389,10 @@ class Client:
 
         # instantiate the server
         self.engine = AiDataEngine()
+
+        # instantiate robot comms
+        if self.robot_connected:
+            self.robot_robot = Robot()
 
         # # set the ball rolling
         # self.main()
@@ -538,8 +538,9 @@ class Client:
         pan_snippet = snippet.pan(pan_law)
         print('pan')
 
-        # todo move bot
-        # self.move_bot(incoming_raw_data, duration)
+        # move bot before making sound
+        if self.robot_connected:
+            self.move_robot(incoming_raw_data, duration)
 
         # get the robot to move with
         play(pan_snippet)
@@ -547,6 +548,16 @@ class Client:
 
         # sleep(duration/ 1000)
         print('fininshed a play')
+
+    def move_robot(self, incoming_data, duration):
+        # move left then right
+        direction = 1
+        degrees = 20 * direction
+
+        # send a simple move instruction then get out of here
+        self.robot_robot.rotate(degrees)
+        direction *= -1
+
 
 if __name__ == '__main__':
     # library = 'jazz'
