@@ -280,7 +280,7 @@ class AiDataEngine():
 
                     # calc affect on behaviour
                     # if input stream is LOUD then smash a random fill and break out to Daddy cycle...
-                    if affect_listen > 0.60:
+                    if affect_listen > 0.50:
                         if self.affect_logging:
                             print('interrupt > HIGH !!!!!!!!!')
 
@@ -296,7 +296,7 @@ class AiDataEngine():
                         break
 
                     # if middle loud fill dict with random, all processes norm
-                    elif 0.30 < affect_listen < 0.59:
+                    elif 0.20 < affect_listen < 0.49:
                         if self.affect_logging:
                             print('interrupt MIDDLE -----------')
                             print('interrupt bang = ', self.interrupt_bang)
@@ -304,7 +304,7 @@ class AiDataEngine():
                         # refill dict with random
                         self.dict_fill()
 
-                    elif affect_listen <= 0.30:
+                    elif affect_listen <= 0.20:
                         if self.affect_logging:
                             print('interrupt LOW_______________')
                             print('interrupt bang = ', self.interrupt_bang)
@@ -351,24 +351,27 @@ class Client:
         if self.robot_connected:
             # import robot scripts
             from arm.arm import Arm
-            # from robot.rerobot import Robot
+            from robot.rerobot import Robot
 
             # instantiate robot comms
-            # self.robot_robot = Robot()
-            self.robot_robot = Arm()
+            self.robot_robot = Robot()
+            self.arm_arm = Arm()
             # self.robot_robot.reset_arm()
 
             # prepare for movement
             # LED's ready fpr drawing
-            self.robot_robot.led_blue()
+            self.arm_arm.led_blue()
 
             # get arm into draw mode
-            self.robot_robot.draw_mode_status = True
-            self.robot_robot.first_draw_move = True
-            self.robot_robot.pen_drawing_status = False
+            self.arm_arm.draw_mode_status = True
+            self.arm_arm.first_draw_move = True
+            self.arm_arm.pen_drawing_status = False
 
             # goto position
-            self.robot_robot.wait_ready()
+            self.arm_arm.wait_ready()
+
+            # move gripper arm up
+            self.robot_robot.gripper_up()
 
         if library == 'jazz':
             self.audio_file_sax = AudioSegment.from_mp3('assets/alfie.mp3')
@@ -511,6 +514,10 @@ class Client:
             print('im here4')
             # grab raw data from engine stream
             raw_data_from_dict = self.got_dict['master_output']
+
+            # trying different part of the dict
+            raw_data_from_dict = self.got_dict['move_rnn']
+
             rhythm_rate = self.got_dict['rhythm_rate']
             print('bass', raw_data_from_dict, rhythm_rate)
 
@@ -573,7 +580,10 @@ class Client:
         # move left then right
         if duration > 1:
 
-            rnd_joint = randrange(4)
+            # select a joint (1-4)
+            # or move bot left or right (5)
+            # or move gripper up or down (6)
+            rnd_joint = randrange(6)
             rnd_joint += 1
 
             rnd_direction = randrange(2)
@@ -585,44 +595,23 @@ class Client:
             rnd_speed = randrange(10)
             rnd_speed *= 10
 
-            self.robot_robot.move_joint_relative_speed(rnd_joint, direction, rnd_speed)
+            # move an arm joint
+            if rnd_joint <= 4:
+                self.arm_arm.move_joint_relative_speed(rnd_joint, direction, rnd_speed)
 
+            # move the wheels
+            elif rnd_joint == 5:
+                if rnd_direction == 1:
+                    self.robot_robot.rotate(10)
+                else:
+                    self.robot_robot.rotate(-10)
 
-            #
-            # if rnd == 0:
-            #     # def draw_arm_fwd(self):
-            #
-            # elif rnd == 1:
-            #     # def draw_arm_bkwd(self):
-            #         self.robot_robot.move_joint_relative_speed(3, 25, 30)
-            #
-            # elif rnd == 2:
-            #     # def draw_arm_right(self):
-            #         self.robot_robot.move_joint_relative_speed(1, 25, 30)
-            #
-            # elif rnd == 3:
-            #     # def /draw_arm_left(self):
-            #         self.robot_robot.move_joint_relative_speed(1, -25, 30)
-
-
-            # if self.direction > 0:
-            #     # degrees = 20
-            #     self.robot_robot.open_claw()
-            #
-            # else:
-            #     # degrees = -20
-            #     self.robot_robot.close_claw()
-
-            # # send a simple move instruction then get out of here
-            # self.robot_robot.rotate(degrees)
-
-            # x = randrange(750)
-            # y = randrange(900)
-            #
-            # self.robot_robot.executeMove([x, y])
-
-        # # change direction for next move
-        # self.direction *= -1
+            # or move the gripper
+            elif rnd_joint == 6:
+                if rnd_direction == 1:
+                    self.robot_robot.gripper_up()
+                else:
+                    self.robot_robot.gripper_down()
 
 
 if __name__ == '__main__':
