@@ -583,7 +583,7 @@ class Client:
             # select a joint (1-4)
             # or move bot left or right (5)
             # or move gripper up or down (6)
-            rnd_joint = randrange(6)
+            rnd_joint = randrange(9)
             rnd_joint += 1
 
             rnd_direction = randrange(2)
@@ -599,19 +599,19 @@ class Client:
             if rnd_joint <= 4:
                 self.arm_arm.move_joint_relative_speed(rnd_joint, direction, rnd_speed)
 
-            # move the wheels
+            # move the gripper
             elif rnd_joint == 5:
-                if rnd_direction == 1:
-                    self.robot_robot.rotate(10)
-                else:
-                    self.robot_robot.rotate(-10)
-
-            # or move the gripper
-            elif rnd_joint == 6:
                 if rnd_direction == 1:
                     self.robot_robot.gripper_up()
                 else:
                     self.robot_robot.gripper_down()
+
+            # or move the wheels
+            elif rnd_joint > 5:
+                if rnd_direction == 1:
+                    self.robot_robot.rotate(1)
+                else:
+                    self.robot_robot.rotate(-1)
 
 
 if __name__ == '__main__':
