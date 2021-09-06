@@ -578,8 +578,13 @@ class Client:
         print('fininshed a play')
 
     def move_robot(self, incoming_data, duration):
-        # move left then right
-        if duration > 1:
+        # top previous movements
+        # self.robot_robot.gripper_stop()
+        # self.robot_robot.paddle_stop()
+        # self.robot_robot.stop()
+
+        # which movement
+        if duration > 0.5:
 
             # select a joint (1-16 % 4)
             # or move bot left or right (17)
@@ -598,7 +603,6 @@ class Client:
             # move an arm joint
             if rnd_joint <= 15:
                 joint = (rnd_joint % 4) + 1
-                print(rnd_joint, joint)
                 self.arm_arm.move_joint_relative_speed(joint, direction, rnd_speed)
 
             # move the gripper
@@ -611,9 +615,9 @@ class Client:
             # or move the wheels
             elif rnd_joint == 17:
                 if rnd_direction == 1:
-                    self.robot_robot.rotate(5)
+                    self.robot_robot.rotate(10)
                 else:
-                    self.robot_robot.rotate(-5)
+                    self.robot_robot.rotate(-10)
 
             # or move the wheels
             elif rnd_joint == 18:
