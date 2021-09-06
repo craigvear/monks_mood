@@ -580,11 +580,10 @@ class Client:
         # move left then right
         if duration > 1:
 
-            # select a joint (1-4)
-            # or move bot left or right (5)
-            # or move gripper up or down (6)
-            rnd_joint = randrange(9)
-            rnd_joint += 1
+            # select a joint (1-16 % 4)
+            # or move bot left or right (17)
+            # or move gripper up or down (18)
+            rnd_joint = randrange(18)
 
             rnd_direction = randrange(2)
             if rnd_direction == 1:
@@ -596,18 +595,19 @@ class Client:
             rnd_speed *= 10
 
             # move an arm joint
-            if rnd_joint <= 4:
-                self.arm_arm.move_joint_relative_speed(rnd_joint, direction, rnd_speed)
+            if rnd_joint <= 15:
+                joint = rnd_joint % 4
+                self.arm_arm.move_joint_relative_speed(joint, direction, rnd_speed)
 
             # move the gripper
-            elif rnd_joint == 5:
+            elif rnd_joint == 16:
                 if rnd_direction == 1:
                     self.robot_robot.gripper_up()
                 else:
                     self.robot_robot.gripper_down()
 
             # or move the wheels
-            elif rnd_joint > 5:
+            elif rnd_joint > 17:
                 if rnd_direction == 1:
                     self.robot_robot.rotate(1)
                 else:
@@ -615,8 +615,8 @@ class Client:
 
 
 if __name__ == '__main__':
-    # library = 'jazz'
-    library = 'pop'
+    library = 'jazz'
+    # library = 'pop'
     cl = Client(library)
 
     # set the ball rolling
