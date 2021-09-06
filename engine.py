@@ -371,7 +371,8 @@ class Client:
             self.arm_arm.wait_ready()
 
             # move gripper arm up
-            self.robot_robot.gripper_up()
+            for n in range(12):
+                self.robot_robot.gripper_up()
 
         if library == 'jazz':
             self.audio_file_sax = AudioSegment.from_mp3('assets/alfie.mp3')
@@ -583,7 +584,7 @@ class Client:
             # select a joint (1-16 % 4)
             # or move bot left or right (17)
             # or move gripper up or down (18)
-            rnd_joint = randrange(18)
+            rnd_joint = randrange(19)
 
             rnd_direction = randrange(2)
             if rnd_direction == 1:
@@ -596,7 +597,8 @@ class Client:
 
             # move an arm joint
             if rnd_joint <= 15:
-                joint = rnd_joint % 4
+                joint = (rnd_joint % 4) + 1
+                print(rnd_joint, joint)
                 self.arm_arm.move_joint_relative_speed(joint, direction, rnd_speed)
 
             # move the gripper
@@ -607,11 +609,18 @@ class Client:
                     self.robot_robot.gripper_down()
 
             # or move the wheels
-            elif rnd_joint > 17:
+            elif rnd_joint == 17:
                 if rnd_direction == 1:
-                    self.robot_robot.rotate(1)
+                    self.robot_robot.rotate(5)
                 else:
-                    self.robot_robot.rotate(-1)
+                    self.robot_robot.rotate(-5)
+
+            # or move the wheels
+            elif rnd_joint == 18:
+                if rnd_direction == 1:
+                    self.robot_robot.paddle_open()
+                else:
+                    self.robot_robot.paddle_close()
 
 
 if __name__ == '__main__':
