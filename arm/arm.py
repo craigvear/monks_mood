@@ -46,7 +46,7 @@ class Arm:
         self.sleep_position_abs = [0, -900, 900, 0, 0]  # absolute arm position for hold
         self.wait_ready_abs = [0, -900, 400, 600, 0]  # waits
         self.draw_position_abs = [0, -90, 60, 840, 0]
-        self.reach_out = [0, 100, -40, 0, 0]  # special for Dmitriy drug dealer bot
+        self.reach_out = [0, 200, -400, 0, 0]  # special for Dmitriy drug dealer bot
 
         # Set standard positions - RELATIVE
         self.open_pen_rel = [0, 0, 0, 0, -140]  # opens claw to receive pen
