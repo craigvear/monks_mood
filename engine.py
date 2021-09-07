@@ -584,7 +584,7 @@ class Client:
         # self.robot_robot.stop()
 
         # which movement
-        if duration > 0.5:
+        if duration > 0.2:
 
             # select a joint (1-16 % 4)
             # or move bot left or right (17)
