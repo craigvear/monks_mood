@@ -368,7 +368,7 @@ class Client:
             self.arm_arm.pen_drawing_status = False
 
             # goto position
-            self.arm_arm.wait_ready()
+            self.arm_arm.draw_ready()
 
             # move gripper arm up
             for n in range(12):
@@ -589,7 +589,7 @@ class Client:
             # select a joint (1-16 % 4)
             # or move bot left or right (17)
             # or move gripper up or down (18)
-            rnd_joint = randrange(19)
+            rnd_joint = randrange(22)
 
             rnd_direction = randrange(2)
             if rnd_direction == 1:
@@ -615,16 +615,16 @@ class Client:
             # or move the wheels
             elif rnd_joint == 17:
                 if rnd_direction == 1:
-                    self.robot_robot.step_forward()
-                else:
-                    self.robot_robot.step_backward()
-
-            # or move the wheels
-            elif rnd_joint == 18:
-                if rnd_direction == 1:
                     self.robot_robot.paddle_open()
                 else:
                     self.robot_robot.paddle_close()
+
+            # or move the wheels
+            elif rnd_joint >= 18:
+                if rnd_direction == 1:
+                    self.robot_robot.step_forward()
+                else:
+                    self.robot_robot.step_backward()
 
 
 if __name__ == '__main__':
