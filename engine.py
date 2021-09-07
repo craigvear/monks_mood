@@ -615,9 +615,9 @@ class Client:
             # or move the wheels
             elif rnd_joint == 17:
                 if rnd_direction == 1:
-                    self.robot_robot.rotate(10)
+                    self.robot_robot.step_forward()
                 else:
-                    self.robot_robot.rotate(-10)
+                    self.robot_robot.step_backward()
 
             # or move the wheels
             elif rnd_joint == 18:
