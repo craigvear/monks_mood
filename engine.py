@@ -368,7 +368,7 @@ class Client:
             self.arm_arm.pen_drawing_status = False
 
             # goto position
-            self.arm_arm.reach_out()
+            self.arm_arm.arm_reach_out()
 
             # move gripper arm up
             for n in range(12):
