@@ -353,8 +353,7 @@ class Client:
             from arm.arm import Arm
             from robot.rerobot import Robot
 
-            # instantiate robot comms
-            self.robot_robot = Robot()
+            # instantiate arm comms
             self.arm_arm = Arm()
             # self.robot_robot.reset_arm()
 
@@ -369,6 +368,9 @@ class Client:
 
             # goto position
             self.arm_arm.arm_reach_out()
+
+            # instantiate robot comms
+            self.robot_robot = Robot()
 
             # move gripper arm up
             for n in range(12):
