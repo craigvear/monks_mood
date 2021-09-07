@@ -597,7 +597,7 @@ class Client:
             else:
                 direction = 20
 
-            rnd_speed = randrange(10)
+            rnd_speed = randrange(3, 15)
             rnd_speed *= 10
 
             # move an arm joint
